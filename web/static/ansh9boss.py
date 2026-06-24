@@ -291,12 +291,52 @@ def extract_jar_zip(filepath):
     # Method 1: Standard ZipFile
     return zipfile.ZipFile(filepath, 'r')
 
+def calculate_sha1(filepath):
+    import hashlib
+    try:
+        sha1 = hashlib.sha1()
+        with open(filepath, 'rb') as f:
+            while True:
+                data = f.read(65536)
+                if not data:
+                    break
+                sha1.update(data)
+        return sha1.hexdigest().lower()
+    except Exception:
+        return ""
+
+def check_cloud_hash_verify(sha1):
+    try:
+        api_url = os.environ.get("ANSH9BOSS_API_URL", "https://ansh9boss.vercel.app")
+        url = f"{api_url}/api/verify_hash?hash={sha1}"
+        import urllib.request
+        import json
+        req = urllib.request.Request(
+            url,
+            headers={'User-Agent': 'ANSH9BOSS-Scanner/1.0'}
+        )
+        with urllib.request.urlopen(req, timeout=2) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            if data.get("valid"):
+                return data.get("clean"), data.get("source")
+    except Exception:
+        pass
+    return False, None
+
 def scan_jar(filepath, config):
     """
     Perform 3-layer scan on a jar file.
     Returns: (risk_level, layers_triggered, match_details, obfuscated)
     """
     filename = filepath.name.lower()
+    
+    # 0. Cloud Whitelist Hash Check
+    sha1 = calculate_sha1(filepath)
+    if len(sha1) == 40:
+        is_clean, source = check_cloud_hash_verify(sha1)
+        if is_clean:
+            return "CLEAN", ["Cloud Whitelist"], [f"Verified clean mod matching cloud database ({source})"], False
+
     risk_level = "CLEAN"
     layers_triggered = []
     match_details = []
@@ -458,9 +498,91 @@ def scan_jar(filepath, config):
         
     return risk_level, layers_triggered, match_details, obfuscated
 
+def sync_cloud_rules(config):
+    """Fetch latest threat rules database from cloud and update configuration in memory."""
+    console.print("[cyan]Syncing scanner threat rules from cloud database...[/cyan]")
+    try:
+        api_url = os.environ.get("ANSH9BOSS_API_URL", "https://ansh9boss.vercel.app")
+        url = f"{api_url}/api/rules"
+        import urllib.request
+        import json
+        req = urllib.request.Request(
+            url,
+            headers={'User-Agent': 'ANSH9BOSS-Scanner/1.0'}
+        )
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            if "known_cheats" in data:
+                config["known_cheats"] = data["known_cheats"]
+            if "known_packages" in data:
+                config["known_packages"] = data["known_packages"]
+            if "cheat_strings" in data:
+                config["cheat_strings"] = data["cheat_strings"]
+            console.print(f"[green]✓ Dynamic rules synced successfully (v{data.get('version', '1.0.0')}).[/green]")
+    except Exception as e:
+        console.print(f"[yellow]! Offline fallback: Using local rules signature database ({e}).[/yellow]")
+
+def audit_running_java_agents():
+    """Audit running Java processes for suspicious -javaagent parameters."""
+    console.print("[cyan]Auditing active JVM processes for runtime hijack agents...[/cyan]")
+    detections = []
+    
+    import subprocess
+    is_windows = os.name == 'nt' or sys.platform == 'win32'
+    
+    try:
+        if is_windows:
+            cmd = ['wmic', 'process', 'where', "name='java.exe' or name='javaw.exe'", 'get', 'CommandLine']
+            output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, universal_newlines=True)
+            lines = output.split('\n')
+        else:
+            cmd = ['ps', 'aux']
+            output = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, universal_newlines=True)
+            lines = [l for l in output.split('\n') if 'java' in l.lower()]
+            
+        for line in lines:
+            line_lower = line.lower()
+            if '-javaagent:' in line_lower:
+                parts = line.split('-javaagent:')
+                if len(parts) > 1:
+                    agent_path = parts[1].split()[0]
+                    suspicious = False
+                    reason = ""
+                    if 'temp' in agent_path.lower() or 'tmp' in agent_path.lower():
+                        suspicious = True
+                        reason = "Agent loaded from temporary directories"
+                    for cheat in ["wurst", "meteor", "liquidbounce", "vape", "sigma"]:
+                        if cheat in agent_path.lower():
+                            suspicious = True
+                            reason = f"Agent matches known cheat keyword: '{cheat}'"
+                            
+                    if suspicious:
+                        detections.append({
+                            "process": "java/javaw",
+                            "agent": agent_path,
+                            "reason": reason,
+                            "commandline": line.strip()[:100] + "..."
+                        })
+    except Exception:
+        pass
+        
+    if detections:
+        console.print("[bold red]🔴 RUNTIME WARNING: Suspicious JVM Javaagent detected![/bold red]")
+        for det in detections:
+            console.print(f"  [red]- Agent Path:[/red] {det['agent']}")
+            console.print(f"    [yellow]Reason:[/yellow] {det['reason']}")
+            console.print(f"    [dim white]Command:[/dim white] {det['commandline']}")
+        console.print()
+    else:
+        console.print("[green]✓ Active JVM memory audit: No malicious javaagent injections found.[/green]\n")
+
 def main():
     config = load_config()
     init_db()
+    
+    # Sync rules and audit active JVMs at startup
+    sync_cloud_rules(config)
+    audit_running_java_agents()
     
     display_banner(config.get("version", "1.0.0"))
     

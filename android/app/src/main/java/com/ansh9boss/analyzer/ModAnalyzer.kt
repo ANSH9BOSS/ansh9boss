@@ -10,6 +10,15 @@ import java.util.zip.ZipInputStream
 class ModAnalyzer(private val context: Context) {
 
     fun scanJar(uri: Uri, fileName: String, lastModified: Long): ModResult {
+        // 0. Cloud Hash verification check
+        val sha1 = getFileSha1(uri)
+        if (sha1.length == 40) {
+            val isClean = checkCloudHashVerify(sha1)
+            if (isClean) {
+                return ModResult("CLEAN", listOf("Cloud Whitelist"), listOf("Verified clean mod matching Modrinth database hash"))
+            }
+        }
+
         val lowerName = fileName.lowercase()
         var riskLevel = "CLEAN"
         val layers = mutableListOf<String>()
@@ -208,6 +217,47 @@ class ModAnalyzer(private val context: Context) {
             totalRead += len
         }
         return bos.toString("ISO-8859-1").lowercase()
+    }
+
+    fun getFileSha1(uri: Uri): String {
+        try {
+            val digest = java.security.MessageDigest.getInstance("SHA-1")
+            val inputStream = context.contentResolver.openInputStream(uri) ?: return ""
+            val buffer = ByteArray(8192)
+            var bytesRead: Int
+            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                digest.update(buffer, 0, bytesRead)
+            }
+            inputStream.close()
+            val md = digest.digest()
+            val sb = StringBuilder()
+            for (b in md) {
+                sb.append(String.format("%02x", b))
+            }
+            return sb.toString()
+        } catch (e: Exception) {
+            return ""
+        }
+    }
+
+    private fun checkCloudHashVerify(sha1: String): Boolean {
+        try {
+            val url = java.net.URL("${Config.DEFAULT_API_URL}/api/verify_hash?hash=$sha1")
+            val conn = url.openConnection() as java.net.HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.connectTimeout = 2000
+            conn.readTimeout = 2000
+            if (conn.responseCode == 200) {
+                val response = conn.inputStream.bufferedReader().use { it.readText() }
+                val json = org.json.JSONObject(response)
+                if (json.getBoolean("valid")) {
+                    return json.getBoolean("clean")
+                }
+            }
+        } catch (e: Exception) {
+            // Fall back to scanning
+        }
+        return false
     }
 }
 

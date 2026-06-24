@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var ivScannerLogo: ImageView
     private lateinit var viewGlowRing: View
     private lateinit var tvCurrentFileName: TextView
+    private lateinit var dbHelper: ScanHistoryDbHelper
 
     private var selectedFolderUri: Uri? = null
     private val executor = Executors.newSingleThreadExecutor()
@@ -54,7 +55,9 @@ class MainActivity : AppCompatActivity() {
         viewGlowRing = findViewById(R.id.viewGlowRing)
         tvCurrentFileName = findViewById(R.id.tvCurrentFileName)
 
+        dbHelper = ScanHistoryDbHelper(this)
         startIdleGlowAnimation()
+        syncThreatRulesAndDisplayHistory()
 
         btnSelectFolder.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
@@ -172,6 +175,7 @@ class MainActivity : AppCompatActivity() {
                     logToConsole("\nScan complete. Flagged $totalFlagged threat(s) out of $totalJars scanned files.")
                     logToConsole("Highest Threat Level: $highestRisk")
                     logToConsole("\nReporting anonymous telemetry to central server...")
+                    dbHelper.addScan(totalJars, totalFlagged, highestRisk)
                 }
 
                 // Report stats to global Vercel server
@@ -305,5 +309,67 @@ class MainActivity : AppCompatActivity() {
             interpolator = LinearInterpolator()
         }
         viewGlowRing.startAnimation(fastPulse)
+    }
+
+    private fun syncThreatRulesAndDisplayHistory() {
+        logToConsole("Checking local scan history cache...")
+        val history = dbHelper.getScanHistory()
+        if (history.isEmpty()) {
+            logToConsole("No past local scans found. System ready.")
+        } else {
+            logToConsole("=== LOCAL SCAN AUDIT LOGS ===")
+            for (rec in history) {
+                logToConsole("  [${rec.timestamp}] Scanned: ${rec.totalFiles} | Flagged: ${rec.flaggedFiles} | Status: ${rec.highestRisk}")
+            }
+            logToConsole("=============================\n")
+        }
+
+        logToConsole("Connecting to cloud server for rule updates...")
+        executor.execute {
+            try {
+                val url = URL("${Config.DEFAULT_API_URL}/api/rules")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "GET"
+                conn.connectTimeout = 3000
+                conn.readTimeout = 3000
+                if (conn.responseCode == 200) {
+                    val response = conn.inputStream.bufferedReader().use { it.readText() }
+                    val json = JSONObject(response)
+                    
+                    val cheatsArray = json.getJSONArray("known_cheats")
+                    val packagesArray = json.getJSONArray("known_packages")
+                    val stringsArray = json.getJSONArray("cheat_strings")
+
+                    val newCheats = mutableListOf<String>()
+                    for (i in 0 until cheatsArray.length()) {
+                        newCheats.add(cheatsArray.getString(i))
+                    }
+                    val newPackages = mutableListOf<String>()
+                    for (i in 0 until packagesArray.length()) {
+                        newPackages.add(packagesArray.getString(i))
+                    }
+                    val newStrings = mutableListOf<String>()
+                    for (i in 0 until stringsArray.length()) {
+                        newStrings.add(stringsArray.getString(i))
+                    }
+
+                    Config.knownCheats = newCheats
+                    Config.knownPackages = newPackages
+                    Config.cheatStrings = newStrings
+
+                    runOnUiThread {
+                        logToConsole("✓ Dynamic Cloud Rules synced successfully (v${json.getString("version")}).")
+                    }
+                } else {
+                    runOnUiThread {
+                        logToConsole("! Failed to sync cloud rules. Running local database fallback.")
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    logToConsole("! Cloud rules server unreachable. Running offline signature cache.")
+                }
+            }
+        }
     }
 }

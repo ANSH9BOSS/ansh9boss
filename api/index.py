@@ -153,6 +153,14 @@ def init_db():
             matched_details TEXT
         )
         """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS verified_hashes (
+            hash VARCHAR(100) PRIMARY KEY,
+            clean BOOLEAN,
+            source VARCHAR(50),
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
     else:
         cur.execute("""
         CREATE TABLE IF NOT EXISTS scans (
@@ -174,6 +182,14 @@ def init_db():
             detection_layer TEXT,
             matched_details TEXT,
             FOREIGN KEY(scan_id) REFERENCES scans(id)
+        )
+        """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS verified_hashes (
+            hash TEXT PRIMARY KEY,
+            clean INTEGER,
+            source TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """)
         
@@ -375,6 +391,83 @@ def update_config():
         return jsonify({"success": True, "message": "Configuration updated successfully!"})
     except Exception as e:
         return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
+
+@app.route("/api/rules")
+def get_rules():
+    """Endpoint to return current known cheats, packages, and cheat strings configuration."""
+    config = load_config()
+    return jsonify({
+        "version": config.get("version", "1.0.0"),
+        "known_cheats": config.get("known_cheats", []),
+        "known_packages": config.get("known_packages", []),
+        "cheat_strings": config.get("cheat_strings", [])
+    })
+
+@app.route("/api/verify_hash")
+def verify_hash():
+    """Verify if a SHA-1 hash corresponds to a clean, known mod from Modrinth or local cache."""
+    sha1 = request.args.get("hash", "").strip().lower()
+    if not sha1 or len(sha1) != 40:
+        return jsonify({"valid": False, "error": "Invalid SHA-1 hash"}), 400
+
+    # 1. Check local cache
+    try:
+        cached = fetch_one("SELECT clean, source FROM verified_hashes WHERE hash = ?", (sha1,))
+        if cached:
+            return jsonify({
+                "valid": True,
+                "hash": sha1,
+                "clean": bool(cached["clean"]),
+                "source": cached["source"],
+                "cached": True
+            })
+    except Exception as e:
+        # DB may not be initialized yet or cache missing
+        print(f"Cache read error: {e}")
+
+    # 2. Query Modrinth API
+    import urllib.request
+    import urllib.error
+    url = f"https://api.modrinth.com/v2/version_file/{sha1}?algorithm=sha1"
+    
+    clean_mod = False
+    source = "Unverified"
+    
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={'User-Agent': 'ANSH9BOSS-Validator/1.0 (contact@ansh9boss.app)'}
+        )
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            if "id" in data:
+                clean_mod = True
+                source = "Modrinth Verified"
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            clean_mod = False
+            source = "Modrinth Unknown (Unverified)"
+        else:
+            return jsonify({"valid": False, "error": f"Cloud API error: {e.reason}"}), 502
+    except Exception as e:
+        return jsonify({"valid": False, "error": f"Lookup failed: {str(e)}"}), 500
+
+    # 3. Save to cache
+    try:
+        execute_query(
+            "INSERT INTO verified_hashes (hash, clean, source) VALUES (?, ?, ?)",
+            (sha1, 1 if clean_mod else 0, source)
+        )
+    except Exception as e:
+        print(f"Cache save error: {e}")
+
+    return jsonify({
+        "valid": True,
+        "hash": sha1,
+        "clean": clean_mod,
+        "source": source,
+        "cached": False
+    })
 
 if __name__ == "__main__":
     init_db()
