@@ -98,11 +98,10 @@ def load_config():
             "ares", "wolfram", "kamiblue", "salhack", "rusherhack"
         ],
         "cheat_strings": [
-            "aimbot", "killaura", "esp", "wallhack", "xray", "freecam", "fly", "speed", 
-            "nofall", "scaffold", "tower", "triggerbot", "autoclick", "baritone", "pathfind", 
-            "autototem", "fastplace", "reach", "criticals", "antiknockback", "timer", "nuker", 
-            "jesus", "spider", "bhop", "strafe", "automine", "autofish", "autoeat", "steal", 
-            "grief", "exploit", "inject", "hook", "bypass"
+            "aimbot", "killaura", "esp", "wallhack", "xray", "freecam", 
+            "nofall", "scaffold", "triggerbot", "autoclick", "baritone", "pathfind", 
+            "autototem", "fastplace", "criticals", "antiknockback", "nuker", 
+            "jesus", "automine", "cheatengine"
         ]
     }
     

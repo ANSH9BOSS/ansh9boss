@@ -18,11 +18,7 @@ class ModAnalyzer(private val context: Context) {
 
         // 1. USB/Recent Injection Check
         val hoursDiff = (System.currentTimeMillis() - lastModified) / (3600.0 * 1000.0)
-        if (hoursDiff <= 24.0) {
-            riskLevel = "DANGEROUS"
-            layers.add("USB Injection")
-            details.add("Recently modified/added within 24 hours")
-        }
+        val isRecent = hoursDiff <= 24.0
 
         // 2. Layer 1: Filename Check
         for (cheat in Config.knownCheats) {
@@ -120,7 +116,7 @@ class ModAnalyzer(private val context: Context) {
                 }
 
                 // Heuristic Obfuscation check
-                if (totalClasses > 5 && (shortClassNames.toDouble() / totalClasses.toDouble()) > 0.75) {
+                if (totalClasses > 15 && (shortClassNames.toDouble() / totalClasses.toDouble()) > 0.85) {
                     obfuscated = true
                 }
 
@@ -138,7 +134,7 @@ class ModAnalyzer(private val context: Context) {
                         riskLevel = "DANGEROUS"
                         layers.add("Layer 3 (String Scan)")
                         details.add("Dangerous cheat keywords (${matchedStrings.size} matches): ${matchedStrings.toList()}")
-                    } else {
+                    } else if (matchedStrings.size == 2) {
                         if (riskLevel != "DANGEROUS") {
                             riskLevel = "SUSPICIOUS"
                         }
@@ -158,6 +154,11 @@ class ModAnalyzer(private val context: Context) {
                 zipInput?.close()
                 inputStream?.close()
             } catch (e: Exception) {}
+        }
+
+        if (isRecent && riskLevel != "CLEAN") {
+            layers.add("Recent Modification")
+            details.add("File was modified/added recently (within 24 hours)")
         }
 
         if (layers.isEmpty()) {

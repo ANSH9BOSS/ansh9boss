@@ -49,11 +49,10 @@ def load_config():
             "ares", "wolfram", "kamiblue", "salhack", "rusherhack", "aristois", "huzuni", "vape"
         ],
         "cheat_strings": [
-            "aimbot", "killaura", "esp", "wallhack", "xray", "freecam", "fly", "speed", 
-            "nofall", "scaffold", "tower", "triggerbot", "autoclick", "baritone", "pathfind", 
-            "autototem", "fastplace", "reach", "criticals", "antiknockback", "timer", "nuker", 
-            "jesus", "spider", "bhop", "strafe", "automine", "autofish", "autoeat", "steal", 
-            "grief", "exploit", "inject", "hook", "bypass", "anticheat", "spoof", "packet", "cheatengine"
+            "aimbot", "killaura", "esp", "wallhack", "xray", "freecam", 
+            "nofall", "scaffold", "triggerbot", "autoclick", "baritone", "pathfind", 
+            "autototem", "fastplace", "criticals", "antiknockback", "nuker", 
+            "jesus", "automine", "cheatengine"
         ]
     }
     
@@ -305,10 +304,6 @@ def scan_jar(filepath, config):
     
     # Check USB Injection
     is_recent = check_usb_injection(filepath)
-    if is_recent:
-        risk_level = "DANGEROUS"
-        layers_triggered.append("USB Injection")
-        match_details.append("Recently modified/added within 24 hours")
 
     # Layer 1: Filename Check
     for cheat in config["known_cheats"]:
@@ -343,7 +338,7 @@ def scan_jar(filepath, config):
             if len(class_name) <= 2:
                 short_names += 1
                 
-        if total_classes > 5 and (short_names / total_classes) > 0.75:
+        if total_classes > 15 and (short_names / total_classes) > 0.85:
             obfuscated = True
             
         # Heuristic 2: Known protectors in files/paths
@@ -411,7 +406,7 @@ def scan_jar(filepath, config):
                 risk_level = "DANGEROUS"
                 layers_triggered.append("Layer 3 (String Scan)")
                 match_details.append(f"Dangerous cheat keywords ({len(matched_strings)} matches): {list(matched_strings)}")
-            elif len(matched_strings) >= 1:
+            elif len(matched_strings) == 2:
                 if risk_level != "DANGEROUS":
                     risk_level = "SUSPICIOUS"
                 layers_triggered.append("Layer 3 (String Scan)")
@@ -433,6 +428,10 @@ def scan_jar(filepath, config):
         if zip_ref:
             zip_ref.close()
             
+    if is_recent and risk_level != "CLEAN":
+        layers_triggered.append("Recent Modification")
+        match_details.append("File was modified/added recently (within 24 hours)")
+
     # Risk levels fallback
     if len(layers_triggered) == 0:
         risk_level = "CLEAN"
