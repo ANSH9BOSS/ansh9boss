@@ -75,7 +75,11 @@ class SecurityDaemonService : Service() {
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
 
-        startForeground(FOREGROUND_ID, notification)
+        if (Build.VERSION.SDK_INT >= 34) {
+            startForeground(FOREGROUND_ID, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        } else {
+            startForeground(FOREGROUND_ID, notification)
+        }
 
         if (!isRunning) {
             // Seed current file state first
