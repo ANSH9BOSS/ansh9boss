@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANSH9BOSS APK Build Status</title>
+    <title>CheatsAnalyser — APK Build Status</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -11,8 +11,13 @@
 
     <header>
         <div class="logo-container">
-            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="ANSH9BOSS Logo" class="logo-img">
-            <a href="/" class="logo-text">ANSH9BOSS</a>
+            <svg width="24" height="24" viewBox="0 0 100 100" style="filter: contrast(1.2);">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#ffffff" stroke-width="6" />
+                <circle cx="50" cy="50" r="10" fill="#ffffff" />
+                <line x1="50" y1="5" x2="50" y2="95" stroke="#ffffff" stroke-width="4" />
+                <line x1="5" y1="50" x2="95" y2="50" stroke="#ffffff" stroke-width="4" />
+            </svg>
+            <a href="/" class="logo-text">CheatsAnalyser</a>
         </div>
         <nav class="nav-links">
             <a href="/"><i class="fa-solid fa-house"></i> Home</a>
@@ -21,23 +26,22 @@
 
     <div class="login-wrapper">
         <div class="login-card" style="max-width: 600px;">
-            <i class="fa-solid fa-screwdriver-wrench" style="font-size: 3rem; color: var(--warning); margin-bottom: 1.5rem; animation: pulse 2s infinite;"></i>
-            <h2 style="color: var(--warning);">APK Compile Pending</h2>
-            <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95dp; line-height: 1.6;">
-                The native Android application has not been compiled and hosted on this server yet. 
+            <i class="fa-solid fa-screwdriver-wrench" style="font-size: 3rem; color: var(--warning); margin-bottom: 1.5rem; animation: pulse-glow 2s infinite;"></i>
+            <h2 style="color: var(--warning); margin-bottom: 1rem;">APK Build Pending</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.95rem; line-height: 1.6;">
+                The native Android application binary is not found on the server static directory.
             </p>
 
-            <div style="text-align: left; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                <h3 style="color: var(--cyan); font-size: 1.1rem; margin-bottom: 0.75rem;"><i class="fa-solid fa-circle-info"></i> Instructions for Server Owner:</h3>
-                <ol style="margin-left: 1.2rem; font-size: 0.85rem; color: var(--text-muted); display: grid; gap: 0.75rem;">
-                    <li>Clone this repository to your local PC:
-                        <code style="display:block; background:#04060b; padding:0.4rem; border-radius:4px; margin-top:0.25rem; color:var(--aqua);">git clone https://github.com/ANSH9BOSS/ansh9boss.git</code>
+            <div style="text-align: left; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 1.5rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                <h3 style="color: var(--accent); font-size: 1rem; margin-bottom: 0.75rem; font-weight: 700;"><i class="fa-solid fa-circle-info"></i> Rebuild & Host Binary Instructions:</h3>
+                <ol style="margin-left: 1.2rem; font-size: 0.85rem; color: var(--text-muted); display: grid; gap: 0.75rem; line-height: 1.5;">
+                    <li>Run the automated compilation script on the build server:
+                        <code style="display:block; background:#000000; padding:0.5rem; border-radius:4px; margin-top:0.25rem; color:var(--text-main); font-family: var(--font-mono);">bash build_apk.sh</code>
                     </li>
-                    <li>Open the <b><code>android/</code></b> directory inside <b>Android Studio</b>.</li>
-                    <li>Select <b>Build -> Build Bundle(s) / APK(s) -> Build APK(s)</b> from the top menu.</li>
-                    <li>Copy the resulting file <code>app-debug.apk</code> and rename it to <code>ansh9boss.apk</code>.</li>
-                    <li>Place it in your repository under <b><code>web/static/ansh9boss.apk</code></b>.</li>
-                    <li>Commit and push the file to GitHub. Vercel will automatically redeploy the site and activate the download button!</li>
+                    <li>The script will verify target SDK tool chains, construct the APK using Gradle in non-interactive mode, and copy it to the static assets folder under:
+                        <code style="display:block; background:#000000; padding:0.5rem; border-radius:4px; margin-top:0.25rem; color:var(--text-main); font-family: var(--font-mono);">web/static/ansh9boss.apk</code>
+                    </li>
+                    <li>Once compilation completes, push changes to your branch and deploy to production on Vercel.</li>
                 </ol>
             </div>
             
@@ -46,7 +50,7 @@
     </div>
 
     <footer>
-        <p>&copy; 2026 ANSH9BOSS. Dashboard and systems compiled locally.</p>
+        <p>&copy; 2026 CheatsAnalyser. Dashboard compiled locally.</p>
     </footer>
 
 </body>

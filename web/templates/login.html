@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANSH9BOSS Admin Login</title>
+    <title>CheatsAnalyser — Admin Login</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -11,8 +11,13 @@
 
     <header>
         <div class="logo-container">
-            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="ANSH9BOSS Logo" class="logo-img">
-            <a href="/" class="logo-text">ANSH9BOSS</a>
+            <svg width="24" height="24" viewBox="0 0 100 100" style="filter: contrast(1.2);">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#ffffff" stroke-width="6" />
+                <circle cx="50" cy="50" r="10" fill="#ffffff" />
+                <line x1="50" y1="5" x2="50" y2="95" stroke="#ffffff" stroke-width="4" />
+                <line x1="5" y1="50" x2="95" y2="50" stroke="#ffffff" stroke-width="4" />
+            </svg>
+            <a href="/" class="logo-text">CheatsAnalyser</a>
         </div>
         <nav class="nav-links">
             <a href="/"><i class="fa-solid fa-house"></i> Home</a>
@@ -23,7 +28,7 @@
         <div class="login-card">
             <h2>Admin Login</h2>
             <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">
-                Enter your secure passcode to access configuration files and local scan logs.
+                Enter your system passcode to access threat configuration databases and local scan history.
             </p>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
@@ -47,7 +52,7 @@
     </div>
 
     <footer>
-        <p>&copy; 2026 ANSH9BOSS. All stats are hosted and managed locally.</p>
+        <p>&copy; 2026 CheatsAnalyser. Managed locally.</p>
     </footer>
 
 </body>

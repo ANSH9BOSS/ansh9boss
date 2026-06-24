@@ -83,19 +83,18 @@ def execute_query(query, params=()):
     return lastrowid
 
 def load_config():
-    """Load configuration from config.json."""
-    # Since config.json might not be writable on serverless, 
-    # we return defaults if we are in Vercel and it doesn't exist.
+    """Load configuration from database with config.json / hardcoded fallback."""
     default_config = {
         "version": "1.0.0",
         "known_cheats": [
             "wurst", "meteor", "sigma", "impact", "aristois", "future", "liquidbounce", 
             "wolfram", "inertia", "ares", "sentry", "entropy", "reflex", "bleach", 
-            "ancientaura", "killaura", "huzuni", "nodus", "vape", "badlion", "mathax"
+            "ancientaura", "killaura", "huzuni", "nodus", "vape", "badlion", "mathax",
+            "kamiblue", "kami", "salhack", "rusherhack"
         ],
         "known_packages": [
             "meteorclient", "wurst", "sigma", "future", "liquidbounce", "mathax", 
-            "ares", "wolfram", "kamiblue", "salhack", "rusherhack"
+            "ares", "wolfram", "kamiblue", "salhack", "rusherhack", "aristois", "huzuni", "vape"
         ],
         "cheat_strings": [
             "aimbot", "killaura", "esp", "wallhack", "xray", "freecam", 
@@ -105,21 +104,111 @@ def load_config():
         ]
     }
     
-    if not CONFIG_PATH.exists():
-        return default_config
+    # Try reading from config.json first if it exists, to seed defaults if custom
+    if CONFIG_PATH.exists():
+        try:
+            with open(CONFIG_PATH, "r") as f:
+                file_defaults = json.load(f)
+                for k, v in file_defaults.items():
+                    default_config[k] = v
+        except Exception:
+            pass
+
+    # Now load from database
     try:
-        with open(CONFIG_PATH, "r") as f:
-            return json.load(f)
-    except Exception:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Check if table exists
+        if USING_POSTGRES:
+            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'config')")
+            table_exists = cur.fetchone()[0]
+        else:
+            cur.execute("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='config'")
+            table_exists = cur.fetchone()[0] > 0
+            
+        if not table_exists:
+            cur.close()
+            conn.close()
+            return default_config
+            
+        formatted = format_query("SELECT key, value FROM config")
+        cur.execute(formatted)
+        rows = cur.fetchall()
+        
+        if not rows:
+            # Seed the database
+            for k, v in default_config.items():
+                if USING_POSTGRES:
+                    cur.execute("INSERT INTO config (key, value) VALUES (%s, %s)", (k, json.dumps(v)))
+                else:
+                    cur.execute("INSERT INTO config (key, value) VALUES (?, ?)", (k, json.dumps(v)))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return default_config
+            
+        config_data = {}
+        for row in rows:
+            # SQLite row is sqlite3.Row if row_factory is set, Postgres row is tuple or dict depending on setup
+            if hasattr(row, 'keys') or isinstance(row, dict):
+                config_data[row["key"]] = json.loads(row["value"])
+            else:
+                config_data[row[0]] = json.loads(row[1])
+                
+        cur.close()
+        conn.close()
+        return config_data
+    except Exception as e:
+        print(f"Error loading configuration from database: {e}")
         return default_config
 
 def save_config(config_data):
-    """Save configuration to config.json (works locally; falls back on read-only serverless)."""
-    if IS_VERCEL:
-        return # Ignore writes to read-only root system in Vercel
-    DATA_DIR.mkdir(exist_ok=True)
-    with open(CONFIG_PATH, "w") as f:
-        json.dump(config_data, f, indent=2)
+    """Save configuration to database (and fallback local file)."""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Check if table exists, create if not
+        if USING_POSTGRES:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS config (
+                key VARCHAR(100) PRIMARY KEY,
+                value TEXT
+            )
+            """)
+            conn.commit()
+        else:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS config (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+            """)
+            conn.commit()
+            
+        for k, v in config_data.items():
+            if USING_POSTGRES:
+                cur.execute(
+                    "INSERT INTO config (key, value) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
+                    (k, json.dumps(v))
+                )
+            else:
+                cur.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", (k, json.dumps(v)))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"Error saving config to database: {e}")
+        
+    if not IS_VERCEL:
+        try:
+            DATA_DIR.mkdir(exist_ok=True)
+            with open(CONFIG_PATH, "w") as f:
+                json.dump(config_data, f, indent=2)
+        except Exception:
+            pass
+
 
 def init_db():
     """Ensure database tables exist on SQLite or PostgreSQL."""
@@ -161,6 +250,12 @@ def init_db():
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS config (
+            key VARCHAR(100) PRIMARY KEY,
+            value TEXT
+        )
+        """)
     else:
         cur.execute("""
         CREATE TABLE IF NOT EXISTS scans (
@@ -190,6 +285,12 @@ def init_db():
             clean INTEGER,
             source TEXT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS config (
+            key TEXT PRIMARY KEY,
+            value TEXT
         )
         """)
         

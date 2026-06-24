@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
                 val takeFlags: Int = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                 contentResolver.takePersistableUriPermission(treeUri, takeFlags)
 
-                logToConsole("linked directory: ${treeUri.path}\nReady to scan. Click 'Start Scan'.")
+                logToConsole("linked directory: ${treeUri.path}<br><font color='#CCCCCC'>Ready to scan. Click 'Start Scan'.</font>", true)
                 tvCurrentFileName.text = "DIRECTORY LINKED"
                 btnStartScan.isEnabled = true
             }
@@ -100,9 +100,9 @@ class MainActivity : AppCompatActivity() {
         progressBar.isIndeterminate = true
         tvConsole.text = ""
         tvCurrentFileName.text = "INITIALIZING SCANNER..."
-        logToConsole("Initializing CheatsAnalyser Engine by ANSH9BOSS v${Config.VERSION}...")
-        logToConsole("Platform: ANDROID (Scoped Storage SAF Bypass)")
-        logToConsole("Scanning folder hierarchy, please wait...\n")
+        logToConsole("<b><font color='#FFFFFF'>Initializing CheatsAnalyser Engine by ANSH9BOSS v${Config.VERSION}...</font></b>", true)
+        logToConsole("<font color='#A1A1AA'>Platform: ANDROID (Scoped Storage SAF Bypass)</font>", true)
+        logToConsole("<font color='#A1A1AA'>Scanning folder hierarchy, please wait...</font>", true)
 
         startScanGlowAnimation()
 
@@ -119,7 +119,7 @@ class MainActivity : AppCompatActivity() {
                 val totalJars = jarFiles.size
                 runOnUiThread {
                     tvCurrentFileName.text = "FOUND $totalJars MOD FILES"
-                    logToConsole("Found $totalJars mod jar file(s) to analyze.")
+                    logToConsole("<font color='#FFFFFF'>Found $totalJars mod jar file(s) to analyze.</font>", true)
                     progressBar.isIndeterminate = false
                     progressBar.max = totalJars
                     progressBar.progress = 0
@@ -134,7 +134,7 @@ class MainActivity : AppCompatActivity() {
                     val name = docFile.name ?: "UnknownMod.jar"
                     runOnUiThread {
                         tvCurrentFileName.text = "SCANNING: $name"
-                        logToConsole("[$index/$totalJars] Scanning $name...")
+                        logToConsole("<font color='#71717A'>[$index/$totalJars]</font> Scanning <font color='#FFFFFF'>$name</font>...", true)
                     }
 
                     val scanResult = analyzer.scanJar(docFile.uri, name, docFile.lastModified())
@@ -157,10 +157,11 @@ class MainActivity : AppCompatActivity() {
                         )
 
                         runOnUiThread {
-                            val prefix = if (scanResult.riskLevel == "DANGEROUS") "🔴 DANGEROUS" else "🟡 SUSPICIOUS"
-                            logToConsole("   ↳ $prefix: ${scanResult.layersTriggered.joinToString(" & ")}")
+                            val isDangerous = scanResult.riskLevel == "DANGEROUS"
+                            val prefix = if (isDangerous) "<font color='#EF4444'><b>🔴 DANGEROUS</b></font>" else "<font color='#F59E0B'><b>🟡 SUSPICIOUS</b></font>"
+                            logToConsole("   ↳ $prefix: <font color='#FFFFFF'>${scanResult.layersTriggered.joinToString(" & ")}</font>", true)
                             for (detail in scanResult.matchedDetails) {
-                                logToConsole("     - $detail")
+                                logToConsole("     <font color='#71717A'>- $detail</font>", true)
                             }
                         }
                     }
@@ -172,9 +173,10 @@ class MainActivity : AppCompatActivity() {
 
                 // Finalize scan logs
                 runOnUiThread {
-                    logToConsole("\nScan complete. Flagged $totalFlagged threat(s) out of $totalJars scanned files.")
-                    logToConsole("Highest Threat Level: $highestRisk")
-                    logToConsole("\nReporting anonymous telemetry to central server...")
+                    val riskColored = if (highestRisk == "DANGEROUS") "<font color='#EF4444'><b>🔴 DANGEROUS</b></font>" else if (highestRisk == "SUSPICIOUS") "<font color='#F59E0B'><b>🟡 SUSPICIOUS</b></font>" else "<font color='#10B981'><b>🟢 CLEAN</b></font>"
+                    logToConsole("<br><b><font color='#FFFFFF'>Scan complete.</font></b> Flagged <font color='#EF4444'><b>$totalFlagged</b></font> threat(s) out of <font color='#FFFFFF'>$totalJars</font> files.", true)
+                    logToConsole("Highest Threat Level: $riskColored", true)
+                    logToConsole("<font color='#A1A1AA'>Reporting telemetry to central server...</font>", true)
                     dbHelper.addScan(totalJars, totalFlagged, highestRisk)
                 }
 
@@ -186,9 +188,9 @@ class MainActivity : AppCompatActivity() {
                     tvCurrentFileName.text = "COMPLETED. FLAGGED $totalFlagged THREATS"
 
                     if (reported) {
-                        logToConsole("✓ Telemetry successfully reported globally to https://ansh9boss.vercel.app")
+                        logToConsole("<font color='#10B981'>✓ Telemetry successfully reported globally to central server.</font>", true)
                     } else {
-                        logToConsole("! Telemetry reporting failed. (Server offline or internet unavailable)")
+                        logToConsole("<font color='#F59E0B'>! Telemetry reporting failed. (Server offline or offline mode)</font>", true)
                     }
                     
                     btnStartScan.isEnabled = true
@@ -202,7 +204,7 @@ class MainActivity : AppCompatActivity() {
                     startIdleGlowAnimation()
                     tvCurrentFileName.text = "SCAN ERROR"
 
-                    logToConsole("Error during scan task execution: ${e.message}")
+                    logToConsole("<font color='#EF4444'><b>[ERROR]</b> Scan task execution failed: ${e.message}</font>", true)
                     btnStartScan.isEnabled = true
                     btnSelectFolder.isEnabled = true
                     progressBar.visibility = View.GONE
@@ -265,10 +267,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun logToConsole(message: String) {
-        tvConsole.append(message + "\n")
-        scrollView.post {
-            scrollView.fullScroll(View.FOCUS_DOWN)
+    private fun logToConsole(message: String, isHtml: Boolean = false) {
+        runOnUiThread {
+            if (isHtml) {
+                tvConsole.append(android.text.Html.fromHtml(message + "<br>", android.text.Html.FROM_HTML_MODE_LEGACY))
+            } else {
+                tvConsole.append(message + "\n")
+            }
+            scrollView.post {
+                scrollView.fullScroll(View.FOCUS_DOWN)
+            }
         }
     }
 
@@ -312,19 +320,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun syncThreatRulesAndDisplayHistory() {
-        logToConsole("Checking local scan history cache...")
+        logToConsole("<b><font color='#FFFFFF'>Checking local scan history cache...</font></b>", true)
         val history = dbHelper.getScanHistory()
         if (history.isEmpty()) {
-            logToConsole("No past local scans found. System ready.")
+            logToConsole("<font color='#71717A'>No past local scans found. System ready.</font>", true)
         } else {
-            logToConsole("=== LOCAL SCAN AUDIT LOGS ===")
+            logToConsole("<font color='#FFFFFF'><b>=== LOCAL SCAN AUDIT LOGS ===</b></font>", true)
             for (rec in history) {
-                logToConsole("  [${rec.timestamp}] Scanned: ${rec.totalFiles} | Flagged: ${rec.flaggedFiles} | Status: ${rec.highestRisk}")
+                val statusColor = if (rec.highestRisk == "DANGEROUS") "#EF4444" else if (rec.highestRisk == "SUSPICIOUS") "#F59E0B" else "#10B981"
+                logToConsole("  <font color='#71717A'>[${rec.timestamp}]</font> Scanned: <font color='#FFFFFF'>${rec.totalFiles}</font> | Flagged: <font color='#EF4444'>${rec.flaggedFiles}</font> | Status: <font color='${statusColor}'><b>${rec.highestRisk}</b></font>", true)
             }
-            logToConsole("=============================\n")
+            logToConsole("<font color='#FFFFFF'><b>=============================</b></font><br>", true)
         }
 
-        logToConsole("Connecting to cloud server for rule updates...")
+        logToConsole("<font color='#A1A1AA'>Connecting to cloud server for rule updates...</font>", true)
         executor.execute {
             try {
                 val url = URL("${Config.DEFAULT_API_URL}/api/rules")
@@ -358,16 +367,16 @@ class MainActivity : AppCompatActivity() {
                     Config.cheatStrings = newStrings
 
                     runOnUiThread {
-                        logToConsole("✓ Dynamic Cloud Rules synced successfully (v${json.getString("version")}).")
+                        logToConsole("<font color='#10B981'>✓ Dynamic Cloud Rules synced successfully (v${json.getString("version")}).</font>", true)
                     }
                 } else {
                     runOnUiThread {
-                        logToConsole("! Failed to sync cloud rules. Running local database fallback.")
+                        logToConsole("<font color='#F59E0B'>! Failed to sync cloud rules. Running local database fallback.</font>", true)
                     }
                 }
             } catch (e: Exception) {
                 runOnUiThread {
-                    logToConsole("! Cloud rules server unreachable. Running offline signature cache.")
+                    logToConsole("<font color='#71717A'>! Cloud rules server unreachable. Running offline signature cache.</font>", true)
                 }
             }
         }

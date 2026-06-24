@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANSH9BOSS — Minecraft Mod Analyzer & Anti-Cheat Scanner</title>
+    <title>CheatsAnalyser — Developed by ANSH9BOSS</title>
+    <meta name="description" content="A high-performance monochrome scanning utility to audit Minecraft mods against malicious bytecode, cheat signatures, and remote access trojans.">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -11,12 +12,19 @@
 
     <header>
         <div class="logo-container">
-            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="ANSH9BOSS Logo" class="logo-img">
-            <span class="logo-text">ANSH9BOSS</span>
+            <!-- Sleek SVG Logo inline -->
+            <svg width="24" height="24" viewBox="0 0 100 100" style="filter: contrast(1.2);">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#ffffff" stroke-width="6" />
+                <circle cx="50" cy="50" r="10" fill="#ffffff" />
+                <line x1="50" y1="5" x2="50" y2="95" stroke="#ffffff" stroke-width="4" />
+                <line x1="5" y1="50" x2="95" y2="50" stroke="#ffffff" stroke-width="4" />
+            </svg>
+            <span class="logo-text">CheatsAnalyser <span class="logo-sub">v{{ version }}</span></span>
         </div>
         <nav class="nav-links">
-            <a href="#how-it-works">How It Works</a>
+            <a href="#checker">Instant Hash Checker</a>
             <a href="#downloads">Downloads</a>
+            <a href="#how-it-works">Scanning Layers</a>
             <a href="#changelog">Changelog</a>
             <a href="/admin" class="nav-btn outline">Admin Panel</a>
         </nav>
@@ -26,27 +34,69 @@
         
         <!-- Hero Section -->
         <section class="hero">
-            <h1>Defend Your Minecraft client with <span>ANSH9BOSS</span></h1>
-            <p>A cross-platform cheat & malicious mod detector built to secure Termux (Android) and Windows environments. Scan local JAR files against known hack clients, manifests, and signatures.</p>
+            <!-- Center Animated Radar SVG -->
+            <div style="position: relative; width: 180px; height: 180px; margin: 0 auto 2.5rem;">
+                <div class="pulse-glow" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 50%;"></div>
+                <svg width="180" height="180" viewBox="0 0 100 100" class="spin-slow" style="display: block;">
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="#ffffff" stroke-width="0.75" opacity="0.3" />
+                    <circle cx="50" cy="50" r="30" fill="none" stroke="#ffffff" stroke-width="0.75" opacity="0.2" />
+                    <circle cx="50" cy="50" r="15" fill="none" stroke="#ffffff" stroke-width="0.75" opacity="0.1" />
+                    <line x1="5" y1="50" x2="95" y2="50" stroke="#ffffff" stroke-width="0.5" opacity="0.2" />
+                    <line x1="50" y1="5" x2="50" y2="95" stroke="#ffffff" stroke-width="0.5" opacity="0.2" />
+                    <line x1="50" y1="50" x2="82" y2="18" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" />
+                    <circle cx="72" cy="32" r="2.5" fill="#ffffff">
+                        <animate attributeName="opacity" values="1;0.2;1" dur="1.5s" repeatCount="indefinite" />
+                    </circle>
+                </svg>
+            </div>
+            
+            <h1>Defend your client with <span>CheatsAnalyser</span></h1>
+            <p>A professional security suite developed by <strong>ANSH9BOSS</strong> to safeguard Minecraft clients. Analyze local JAR files against dangerous bytecode patterns, signature packages, obfuscated code blockers, and webhook stealers.</p>
             <div class="hero-actions">
-                <a href="#downloads" class="nav-btn primary">Get Started Now</a>
-                <a href="#how-it-works" class="nav-btn outline">Learn More</a>
+                <a href="#checker" class="nav-btn primary">Instant Mod Checker</a>
+                <a href="#downloads" class="nav-btn outline">Get Desktop / Mobile App</a>
+            </div>
+        </section>
+
+        <!-- Mod Hash Checker Drag & Drop Widget (Suggested Feature) -->
+        <section id="checker" style="margin-bottom: 5rem; scroll-margin-top: 80px;">
+            <h2 class="section-title">Instant Mod Hash Verifier</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-top: -2.5rem; margin-bottom: 3rem; font-size: 0.95rem;">Drag and drop any Minecraft mod jar here to check its SHA-1 hash against the cloud security cache instantly.</p>
+            
+            <div class="checker-widget" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                <input type="file" id="file-input" accept=".jar">
+                <i class="fa-solid fa-cloud-arrow-up checker-icon" id="drop-icon"></i>
+                <h4 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--accent);" id="drop-title">Select Mod JAR or Drag & Drop</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;" id="drop-status">Files are processed locally in your browser. Telemetry only queries hashes.</p>
+                
+                <div id="hash-result-box">
+                    <div style="font-weight: 700; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span>SCAN RESULTS</span>
+                        <span id="hash-badge" class="badge">PENDING</span>
+                    </div>
+                    <div style="display: grid; gap: 0.35rem; color: var(--text-muted); font-size: 0.8rem; line-height: 1.4;">
+                        <div><strong style="color: var(--text-main);">File Name:</strong> <span id="res-filename">-</span></div>
+                        <div><strong style="color: var(--text-main);">SHA-1:</strong> <span id="res-sha1">-</span></div>
+                        <div><strong style="color: var(--text-main);">Security Status:</strong> <span id="res-status">-</span></div>
+                        <div><strong style="color: var(--text-main);">Source Reference:</strong> <span id="res-source">-</span></div>
+                    </div>
+                </div>
             </div>
         </section>
 
         <!-- Live Realtime Telemetry Feed -->
         <section id="telemetry" style="margin-bottom: 5rem;">
-            <h2 class="section-title">Global Live Threat Tracker</h2>
-            <p style="text-align: center; color: var(--text-muted); margin-top: -2rem; margin-bottom: 3rem;">Real-time feed showing active mod analysis scans from Minecraft clients worldwide.</p>
+            <h2 class="section-title">Live Threat Feed</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-top: -2.5rem; margin-bottom: 3rem; font-size: 0.95rem;">Real-time tracker showing anonymized security audits reported globally from CheatsAnalyser nodes.</p>
             
-            <div class="admin-grid" style="margin-bottom: 2rem;">
+            <div class="admin-grid" style="margin-bottom: 1.5rem;">
                 <div class="stat-card">
                     <span class="stat-value" id="global-scans">0</span>
-                    <span class="stat-label">Global Scans Completed</span>
+                    <span class="stat-label">Telemetry Scans</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-value" id="global-files" style="color: var(--aqua);">0</span>
-                    <span class="stat-label">Total Files Analyzed</span>
+                    <span class="stat-value" id="global-files">0</span>
+                    <span class="stat-label">Total Files Audited</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-value" id="global-flagged" style="color: var(--danger);">0</span>
@@ -54,107 +104,106 @@
                 </div>
             </div>
 
-            <div class="card" style="padding: 1.5rem; background: rgba(7, 10, 18, 0.7); border-color: rgba(0, 242, 254, 0.15);">
-                <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--cyan); display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="fa-solid fa-satellite-dish" style="animation: pulse 2s infinite;"></i> LIVE ACTIVITY TELEMETRY FEED
+            <div class="telemetry-card">
+                <h3 style="font-size: 1rem; margin-bottom: 1.25rem; color: var(--accent); display: flex; align-items: center; gap: 0.5rem; font-weight: 800;">
+                    <i class="fa-solid fa-satellite-dish" style="animation: pulse-glow 2s infinite;"></i> STREAMING CORE DATA DECTECTION LOG
                 </h3>
-                <div id="ticker-feed" style="max-height: 250px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.75rem; padding-right: 0.5rem;">
-                    <div style="color: var(--text-muted); text-align: center; padding: 2rem 0;">Connecting to telemetry stream...</div>
+                <div id="ticker-feed" style="max-height: 240px; overflow-y: auto; font-family: var(--font-mono); font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.65rem; padding-right: 0.5rem;">
+                    <div style="color: var(--text-muted); text-align: center; padding: 2rem 0;">Connecting to threat tracker core...</div>
                 </div>
             </div>
         </section>
 
         <!-- Downloads / Install Section -->
-        <section id="downloads" style="margin-top: 2rem;">
-            <h2 class="section-title">Get ANSH9BOSS</h2>
+        <section id="downloads" style="margin-bottom: 5rem; scroll-margin-top: 80px;">
+            <h2 class="section-title">Get CheatsAnalyser</h2>
             <div class="downloads-grid">
                 
                 <!-- Android Solutions Card -->
                 <div class="card">
-                    <h3><i class="fa-brands fa-android"></i> Android Solutions</h3>
-                    <p>Audit PojavLauncher directly on your mobile device. Choose between the native app or the CLI wrapper.</p>
+                    <h3><i class="fa-brands fa-android"></i> Android Native App</h3>
+                    <p>Audit mobile PojavLauncher directories directly. Bypasses scoped storage limitations securely using standard Storage Access Framework linking.</p>
                     
-                    <!-- Native App Option -->
-                    <div style="background: rgba(0, 242, 254, 0.03); border: 1px solid rgba(0, 242, 254, 0.1); padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem; text-align: left;">
-                        <h4 style="color: var(--cyan); font-size: 0.95rem; margin-bottom: 0.4rem;"><i class="fa-solid fa-mobile-screen-button"></i> Method 1: Native App (Bypasses Scoped Storage)</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4;">Runs natively using Android's Storage Access Framework (SAF) to browse and scan PojavLauncher directories securely.</p>
-                        <a href="/download/ansh9boss.apk" download class="btn-block" style="display: block; text-align: center; font-size: 0.9rem; padding: 0.6rem;">Download Android App (.apk)</a>
+                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 1.2rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                        <h4 style="color: var(--accent); font-size: 0.9rem; margin-bottom: 0.4rem; font-weight: 600;"><i class="fa-solid fa-mobile-screen-button"></i> Scoped Storage SAF Bypass</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0;">Integrates an SQLite telemetry cache database, pulse rotating vector animations, dynamic cloud rule updates, and console logging interfaces.</p>
                     </div>
                     
-                    <!-- Termux Option -->
-                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); padding: 1.2rem; border-radius: 8px; text-align: left;">
-                        <h4 style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 0.4rem;"><i class="fa-solid fa-terminal"></i> Method 2: Termux Command-Line Interface</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.8rem; line-height: 1.4;">Terminal scanner wrapper. Copy this command and run it inside your Termux terminal app:</p>
-                        <div class="code-box" style="margin-bottom: 1rem; padding: 0.5rem 0.75rem; font-size: 0.75rem;">
+                    <a href="/download/ansh9boss.apk" download class="btn-block" style="display: block; text-align: center;"><i class="fa-solid fa-download"></i> Download Android APK</a>
+                </div>
+
+                <!-- Windows & CLI Solutions Card -->
+                <div class="card">
+                    <h3><i class="fa-brands fa-windows"></i> Windows & CLI Systems</h3>
+                    <p>Audit standard mod directory paths automatically. Integrates dynamic Java JVM agent inspection parameters at runtime.</p>
+                    
+                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 1.2rem; border-radius: 4px; margin-bottom: 1.25rem;">
+                        <h4 style="color: var(--accent); font-size: 0.9rem; margin-bottom: 0.4rem; font-weight: 600;"><i class="fa-solid fa-terminal"></i> Termux (Android) CLI Scan</h4>
+                        <div class="code-box" style="margin-bottom: 0; padding: 0.5rem 0.75rem; font-size: 0.7rem;">
                             <span>curl -sSL -o run.sh https://raw.githubusercontent.com/ANSH9BOSS/ansh9boss/main/run.sh && bash run.sh</span>
                             <button class="copy-btn" onclick="copyText('curl -sSL -o run.sh https://raw.githubusercontent.com/ANSH9BOSS/ansh9boss/main/run.sh && bash run.sh')"><i class="fa-regular fa-copy"></i></button>
                         </div>
-                        <a href="{{ url_for('static', filename='run.sh') }}" download class="btn-block outline" style="display: block; text-align: center; font-size: 0.85rem; padding: 0.4rem;">Download run.sh</a>
                     </div>
-                </div>
 
-                <!-- Windows CMD Card -->
-                <div class="card">
-                    <h3><i class="fa-brands fa-windows"></i> Windows CMD</h3>
-                    <p>Search standard locations (CurseForge, PrismLauncher, GDLauncher, ATLauncher, MultiMC, Vanilla Minecraft) automatically.</p>
-                    
-                    <div style="text-align: left; font-size: 0.9rem; margin-bottom: 1.5rem;">
-                        <ol style="margin-left: 1.2rem; display: grid; gap: 0.5rem; color: var(--text-muted);">
-                            <li>Open Windows Command Prompt (CMD) and run this PowerShell download & execution command:</li>
-                            <div class="code-box">
-                                <span>powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/ANSH9BOSS/ansh9boss/main/run.bat' -OutFile 'run.bat'" && run.bat</span>
-                                <button class="copy-btn" onclick="copyText('powershell -Command \"Invoke-WebRequest -Uri \'https://raw.githubusercontent.com/ANSH9BOSS/ansh9boss/main/run.bat\' -OutFile \'run.bat\'\" && run.bat')"><i class="fa-regular fa-copy"></i></button>
-                            </div>
-                            <li>The script will verify Python is installed, load libraries, download components, and scan.</li>
-                        </ol>
+                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-glass); padding: 1.2rem; border-radius: 4px; margin-bottom: 1.5rem;">
+                        <h4 style="color: var(--accent); font-size: 0.9rem; margin-bottom: 0.4rem; font-weight: 600;"><i class="fa-solid fa-gears"></i> Windows CMD Automation</h4>
+                        <div class="code-box" style="margin-bottom: 0; padding: 0.5rem 0.75rem; font-size: 0.7rem;">
+                            <span>powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/ANSH9BOSS/ansh9boss/main/run.bat' -OutFile 'run.bat'" && run.bat</span>
+                            <button class="copy-btn" onclick="copyText('powershell -Command \"Invoke-WebRequest -Uri \'https://raw.githubusercontent.com/ANSH9BOSS/ansh9boss/main/run.bat\' -OutFile \'run.bat\'\" && run.bat')"><i class="fa-regular fa-copy"></i></button>
+                        </div>
                     </div>
-                    <a href="{{ url_for('static', filename='run.bat') }}" download class="btn-block" style="display: block; text-align: center;">Download run.bat</a>
                 </div>
 
             </div>
         </section>
 
         <!-- How It Works Section -->
-        <section id="how-it-works">
-            <h2 class="section-title">3-Layer Scanning Engine</h2>
+        <section id="how-it-works" style="margin-bottom: 5rem; scroll-margin-top: 80px;">
+            <h2 class="section-title">4-Layer Threat Scanner</h2>
             <div class="steps-timeline">
                 
                 <div class="step-card">
                     <div class="step-num">1</div>
                     <h4>Filename Scanner</h4>
-                    <p>Scans the <code>.jar</code> file names against a hardcoded list of known cheat client signatures (Wurst, Meteor, Sigma, Vape, Impact, Aristois, Wolfram, and more) using fast, case-insensitive string parsing.</p>
+                    <p>Instantly verifies filename signatures against known clients (Wurst, Meteor, Sigma, Vape, Impact, Mathax, etc.) using regex rules.</p>
                 </div>
 
                 <div class="step-card">
                     <div class="step-num">2</div>
-                    <h4>Manifest & Package Check</h4>
-                    <p>Inspects the package directories and reads manifest files inside the archive (e.g. <code>MANIFEST.MF</code>, <code>fabric.mod.json</code>, <code>mods.toml</code>) to verify identifier packages and author tags.</p>
+                    <h4>Manifest Audit</h4>
+                    <p>Scans internal configurations, including <code>fabric.mod.json</code>, <code>mods.toml</code>, and <code>MANIFEST.MF</code> metadata for identity tags.</p>
                 </div>
 
                 <div class="step-card">
                     <div class="step-num">3</div>
                     <h4>Bytecode String Scan</h4>
-                    <p>Scans binary <code>.class</code> files and textual configuration files inside the mod for signature cheat strings (e.g. <i>aimbot, killaura, freecam, scaffold, wallhack, fastplace, fly, bhop</i>).</p>
+                    <p>Decodes and reads strings within Java <code>.class</code> files for hack indicators (e.g. <i>aimbot, killaura, scaffold, autoclick, baritone</i>).</p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-num">4</div>
+                    <h4>Payload Intelligence</h4>
+                    <p>Heuristically inspects classes for malicious triggers, runtime process execution methods, discord webhook links, and ClassLoaders.</p>
                 </div>
 
             </div>
         </section>
 
         <!-- Changelog Section -->
-        <section id="changelog" class="changelog-section">
+        <section id="changelog" class="changelog-section" style="scroll-margin-top: 80px;">
             <h2 class="section-title">Changelog</h2>
             
             <div class="changelog-item">
                 <div class="changelog-header">
-                    <span class="changelog-version">v1.0.0 (Release)</span>
+                    <span class="changelog-version">v1.1.0 (Current Release)</span>
                     <span class="changelog-date">June 24, 2026</span>
                 </div>
                 <ul class="changelog-list">
-                    <li>Launched cross-platform Minecraft Mod Analyzer engine.</li>
-                    <li>Added 3-Layer Scan: Filenames, Manifest/Package, and Bytecode String keywords.</li>
-                    <li>Built Android (Termux) and Windows CMD detection routines.</li>
-                    <li>Implemented SQLite integration to report logs locally to companion website dashboard.</li>
-                    <li>Developed customizable admin panel config management.</li>
+                    <li>Rebranded platform UI completely to <strong>CheatsAnalyser</strong>.</li>
+                    <li>Ported site theme to a premium monochrome Black & White stylesheet structure.</li>
+                    <li>Developed browser-native drag-and-drop SHA-1 hash validator widget.</li>
+                    <li>Migrated server admin panel databases to dynamic, persistent relational rulesets.</li>
+                    <li>Optimized Layer 4 scan algorithms (Discord webhooks, reflective ClassLoader defineClass, and exec runtimes).</li>
                 </ul>
             </div>
         </section>
@@ -162,8 +211,8 @@
     </div>
 
     <footer>
-        <p>&copy; 2026 ANSH9BOSS. All scans are executed locally on the user device. No user tracking, IP collection, or analytics are stored.</p>
-        <p style="margin-top: 0.5rem; font-size: 0.8rem; color: rgba(255, 71, 126, 0.6);"><i class="fa-solid fa-shield-halved"></i> Defensive security utility only.</p>
+        <p>&copy; 2026 CheatsAnalyser. Developed by ANSH9BOSS. Scans execute locally. No cookies, trackers, or IP records logged.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted);"><i class="fa-solid fa-shield-halved"></i> Defensive security assessment package.</p>
     </footer>
 
     <script>
@@ -187,23 +236,24 @@
                         
                         const ticker = document.getElementById("ticker-feed");
                         if (data.recent.length === 0) {
-                            ticker.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No telemetry reports logged yet. Run scans to start stream.</div>';
+                            ticker.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No security scans reported globally. Logs will appear here automatically.</div>';
                             return;
                         }
                         
                         let html = "";
                         data.recent.forEach(r => {
                             let badgeClass = "success";
-                            let badgeIcon = "🟢";
+                            let badgeIcon = "CLEAN";
                             if (r.risk_level === "DANGEROUS") {
                                 badgeClass = "danger";
-                                badgeIcon = "🔴";
+                                badgeIcon = "🔴 DANGEROUS";
                             } else if (r.risk_level === "SUSPICIOUS") {
                                 badgeClass = "warning";
-                                badgeIcon = "🟡";
+                                badgeIcon = "🟡 SUSPICIOUS";
+                            } else {
+                                badgeIcon = "🟢 CLEAN";
                             }
                             
-                            // Format timestamp nicely
                             let timeStr = r.timestamp;
                             try {
                                 const parts = r.timestamp.split(" ");
@@ -211,15 +261,15 @@
                             } catch(e) {}
                             
                             html += `
-                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 0.4rem; flex-wrap: wrap; gap: 0.5rem;">
                                     <div>
-                                        <span style="color: var(--text-muted); font-size: 0.8rem;">[${timeStr}]</span>
-                                        <span style="color: var(--cyan); font-weight: bold; margin-left: 0.25rem;">[${r.platform.toUpperCase()}]</span>
-                                        <span style="color: var(--text-main); font-weight: 600; margin-left: 0.5rem;">${r.file_name}</span>
+                                        <span style="color: var(--text-muted); font-size: 0.75rem;">[${timeStr}]</span>
+                                        <span style="color: var(--accent); font-weight: bold; margin-left: 0.25rem;">[${r.platform.toUpperCase()}]</span>
+                                        <span style="color: var(--text-main); margin-left: 0.5rem;">${r.file_name}</span>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                                         <span style="font-size: 0.75rem; color: var(--text-muted);">${r.detection_layer}</span>
-                                        <span class="badge ${badgeClass}" style="padding: 0.1rem 0.4rem; font-size: 0.7rem;">${badgeIcon} ${r.risk_level}</span>
+                                        <span class="badge ${badgeClass}">${badgeIcon}</span>
                                     </div>
                                 </div>
                             `;
@@ -232,6 +282,109 @@
         
         updateLiveFeed();
         setInterval(updateLiveFeed, 5000);
+
+        // Drag and Drop SHA-1 Hash calculator logic (Suggested feature)
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const resultBox = document.getElementById('hash-result-box');
+        const resFilename = document.getElementById('res-filename');
+        const resSha1 = document.getElementById('res-sha1');
+        const resStatus = document.getElementById('res-status');
+        const resSource = document.getElementById('res-source');
+        const hashBadge = document.getElementById('hash-badge');
+        const dropIcon = document.getElementById('drop-icon');
+        const dropTitle = document.getElementById('drop-title');
+        const dropStatusText = document.getElementById('drop-status');
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Toggle drag hover styles
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        // Handle file drop/select
+        dropZone.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFile(e.target.files[0]);
+        });
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length) handleFile(files[0]);
+        }
+
+        function handleFile(file) {
+            dropIcon.className = "fa-solid fa-spinner fa-spin checker-icon";
+            dropTitle.innerText = "Processing Mod File...";
+            dropStatusText.innerText = "Reading bytes and calculating SHA-1 locally...";
+            resultBox.style.display = "none";
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const buffer = e.target.result;
+                crypto.subtle.digest('SHA-1', buffer).then(hashBuffer => {
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                    
+                    resFilename.innerText = file.name;
+                    resSha1.innerText = hashHex;
+                    
+                    // Query verification API
+                    fetch(`/api/verify_hash?hash=${hashHex}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            resultBox.style.display = "block";
+                            dropIcon.className = "fa-solid fa-circle-check checker-icon";
+                            dropTitle.innerText = "Scan Completed!";
+                            dropStatusText.innerText = "Mod checker results verified successfully.";
+
+                            if (data.valid) {
+                                if (data.clean) {
+                                    hashBadge.className = "badge success";
+                                    hashBadge.innerText = "🟢 VERIFIED CLEAN";
+                                    resStatus.innerHTML = "<span style='color: var(--success); font-weight:bold;'>✓ Match found in Modrinth secure whitelist cache.</span>";
+                                    resSource.innerText = data.source;
+                                } else {
+                                    hashBadge.className = "badge danger";
+                                    hashBadge.innerText = "🔴 KNOWN DETECTED THREAT";
+                                    resStatus.innerHTML = "<span style='color: var(--danger); font-weight:bold;'>! This file has been flagged as suspicious or malicious.</span>";
+                                    resSource.innerText = data.source;
+                                }
+                            } else {
+                                hashBadge.className = "badge warning";
+                                hashBadge.innerText = "🟡 UNKNOWN SIGNATURE";
+                                resStatus.innerHTML = "<span style='color: var(--warning); font-weight:bold;'>! Unverified signature hash. Run local audit before launching.</span>";
+                                resSource.innerText = "Modrinth catalog signature missing (Custom mod or modified file)";
+                            }
+                        })
+                        .catch(err => {
+                            resultBox.style.display = "block";
+                            dropIcon.className = "fa-solid fa-triangle-exclamation checker-icon";
+                            dropTitle.innerText = "Validation Failed";
+                            dropStatusText.innerText = "Could not sync verification results.";
+                            hashBadge.className = "badge warning";
+                            hashBadge.innerText = "ERROR";
+                            resStatus.innerText = "Network transmission failed: " + err.message;
+                            resSource.innerText = "Offline Cache Only";
+                        });
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
     </script>
 </body>
 </html>

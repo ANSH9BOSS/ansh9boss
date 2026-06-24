@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANSH9BOSS System Dashboard</title>
+    <title>CheatsAnalyser — Admin System Console</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -11,8 +11,13 @@
 
     <header>
         <div class="logo-container">
-            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="ANSH9BOSS Logo" class="logo-img">
-            <a href="/" class="logo-text">ANSH9BOSS</a>
+            <svg width="24" height="24" viewBox="0 0 100 100" style="filter: contrast(1.2);">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#ffffff" stroke-width="6" />
+                <circle cx="50" cy="50" r="10" fill="#ffffff" />
+                <line x1="50" y1="5" x2="50" y2="95" stroke="#ffffff" stroke-width="4" />
+                <line x1="5" y1="50" x2="95" y2="50" stroke="#ffffff" stroke-width="4" />
+            </svg>
+            <a href="/" class="logo-text">CheatsAnalyser</a>
         </div>
         <nav class="nav-links">
             <a href="/" target="_blank"><i class="fa-solid fa-square-arrow-up-right"></i> View Website</a>
@@ -23,56 +28,56 @@
     <div class="container">
         
         <!-- Welcome Title -->
-        <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
             <div>
-                <h1 style="font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, var(--aqua), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">System Console</h1>
-                <p style="color: var(--text-muted);">Manage cheat databases, monitor detections, and customize rules.</p>
+                <h1 style="font-size: 2rem; font-weight: 800; color: var(--accent);">System Console</h1>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Manage dynamic cheat definitions, check global telemetry scans, and update fallback client settings.</p>
             </div>
-            <div style="background: rgba(255, 71, 126, 0.05); padding: 0.5rem 1rem; border-radius: 6px; border: 1px solid rgba(255, 71, 126, 0.15); color: var(--danger); font-size: 0.85rem; font-weight: 600;">
-                <i class="fa-solid fa-triangle-exclamation"></i> Local scan logs only. No external telemetry active.
+            <div style="background: rgba(255, 71, 126, 0.04); padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid rgba(255, 71, 126, 0.15); color: var(--danger); font-size: 0.8rem; font-weight: 600;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Telemetry active. Node reporting online.
             </div>
         </div>
 
         <!-- Dashboard Stats Cards -->
         <div class="admin-grid">
             <div class="stat-card">
-                <span class="stat-value">{{ stats.total_scans }}</span>
+                <span class="stat-value" id="stats-scans">{{ stats.total_scans }}</span>
                 <span class="stat-label">Total Scans Run</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value">{{ stats.total_files_scanned }}</span>
-                <span class="stat-label">Total JARs Checked</span>
+                <span class="stat-value" id="stats-files">{{ stats.total_files_scanned }}</span>
+                <span class="stat-label">Total JARs Audited</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value" style="color: var(--danger);">{{ stats.total_flagged_files }}</span>
-                <span class="stat-label">Flagged Detections</span>
+                <span class="stat-value" style="color: var(--danger);" id="stats-flagged">{{ stats.total_flagged_files }}</span>
+                <span class="stat-label">Flagged Threat Items</span>
             </div>
             <div class="stat-card">
                 <span class="stat-value" style="color: var(--warning);">{{ config.version }}</span>
-                <span class="stat-label">Scanner Engine v.</span>
+                <span class="stat-label">Engine Rule Version</span>
             </div>
         </div>
 
         <!-- Tabs Navigation -->
         <div class="tab-container">
             <div class="tab-nav">
-                <button class="tab-btn active" onclick="openTab(event, 'scan-logs')"><i class="fa-solid fa-list-check"></i> Local Scan Logs</button>
-                <button class="tab-btn" onclick="openTab(event, 'threat-manager')"><i class="fa-solid fa-database"></i> Threat Database</button>
+                <button class="tab-btn active" onclick="openTab(event, 'scan-logs')"><i class="fa-solid fa-list-check"></i> Telemetry Scan Logs</button>
+                <button class="tab-btn" onclick="openTab(event, 'threat-manager')"><i class="fa-solid fa-database"></i> Rule Signature DB</button>
                 <button class="tab-btn" onclick="openTab(event, 'breakdown')"><i class="fa-solid fa-chart-pie"></i> Detection Breakdown</button>
             </div>
 
             <!-- Tab 1: Scan Logs -->
             <div id="scan-logs" class="tab-content active">
-                <h3 style="margin-bottom: 1.5rem;">Local Scan History</h3>
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Global Nodes Telemetry</h3>
                 
                 {% if not stats.recent_scans %}
-                    <div style="text-align: center; padding: 4rem 2rem; background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 8px;">
-                        <i class="fa-solid fa-circle-info" style="font-size: 3rem; color: var(--aqua); margin-bottom: 1.5rem; opacity: 0.5;"></i>
-                        <h4>No Local Scans Logged</h4>
-                        <p style="color: var(--text-muted); max-width: 500px; margin: 0.5rem auto 1.5rem;">
-                            You have not run any scans using the CLI tool yet. Execute the script to check mod directories, and logs will populate here automatically.
+                    <div style="text-align: center; padding: 4rem 2rem; background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 4px;">
+                        <i class="fa-solid fa-circle-info" style="font-size: 2.5rem; color: var(--accent); margin-bottom: 1.25rem; opacity: 0.5;"></i>
+                        <h4 style="margin-bottom: 0.5rem;">No Scans Logged Yet</h4>
+                        <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 1.5rem; font-size: 0.9rem;">
+                            Run a scan on the Android native app or using the Python/Termux CLI. Logs reported from nodes will automatically appear here.
                         </p>
-                        <code style="background: #04060b; padding: 0.6rem 1rem; border-radius: 4px; font-family: var(--font-mono); color: var(--cyan);">python ansh9boss.py</code>
+                        <code style="background: #000000; padding: 0.5rem 1rem; border-radius: 4px; font-family: var(--font-mono); color: var(--text-main); font-size: 0.8rem;">python ansh9boss.py</code>
                     </div>
                 {% else %}
                     <div class="table-responsive">
@@ -81,16 +86,18 @@
                                 <tr>
                                     <th>Scan ID</th>
                                     <th>Timestamp</th>
-                                    <th>Total Files Checked</th>
-                                    <th>Flagged Threats</th>
-                                    <th>Highest Threat Level</th>
+                                    <th>Platform Node</th>
+                                    <th>Files Audited</th>
+                                    <th>Threat Detections</th>
+                                    <th>Severity Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for scan in stats.recent_scans %}
                                 <tr>
-                                    <td style="font-family: var(--font-mono); color: var(--aqua);">#{{ scan.id }}</td>
+                                    <td style="font-family: var(--font-mono); color: var(--accent);">#{{ scan.id }}</td>
                                     <td>{{ scan.timestamp }}</td>
+                                    <td style="font-weight: 600;">{{ scan.platform }}</td>
                                     <td>{{ scan.total_files }}</td>
                                     <td style="font-weight: 700; color: {% if scan.flagged_files > 0 %}var(--danger){% else %}var(--success){% endif %};">{{ scan.flagged_files }}</td>
                                     <td>
@@ -112,8 +119,8 @@
 
             <!-- Tab 2: Threat Database Manager -->
             <div id="threat-manager" class="tab-content">
-                <h3 style="margin-bottom: 0.5rem;">Threat database config</h3>
-                <p style="color: var(--text-muted); margin-bottom: 2rem;">Updates to this file immediately impact Layer 1, Layer 2, and Layer 3 detections inside the CLI mod scanner.</p>
+                <h3 style="margin-bottom: 0.5rem; font-size: 1.25rem;">Threat Signature Configuration</h3>
+                <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 0.9rem;">Configure signature rules dynamically. Changes saved here sync instantly to all Android and CLI scanner client nodes globally.</p>
                 
                 <div class="config-editor">
                     <!-- Version field -->
@@ -148,24 +155,24 @@
                 <div class="feedback-msg" id="feedback"></div>
 
                 <div class="save-section">
-                    <button class="btn-save" onclick="saveConfig()"><i class="fa-solid fa-floppy-disk"></i> Save Configuration</button>
+                    <button class="btn-save" onclick="saveConfig()"><i class="fa-solid fa-floppy-disk"></i> Save Rules Configuration</button>
                 </div>
             </div>
 
             <!-- Tab 3: Detection Breakdown -->
             <div id="breakdown" class="tab-content">
-                <h3 style="margin-bottom: 1.5rem;">Threat Intelligence Breakdown</h3>
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem;">Detection Intel Breakdown</h3>
                 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem;">
                     
                     <!-- Common Threat Detections -->
-                    <div style="background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 8px; padding: 2rem;">
-                        <h4 style="color: var(--cyan); margin-bottom: 1rem;"><i class="fa-solid fa-triangle-exclamation"></i> Top Triggered Threat Files</h4>
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 4px; padding: 1.5rem;">
+                        <h4 style="color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem;"><i class="fa-solid fa-triangle-exclamation"></i> Frequently Detected Files</h4>
                         {% if not stats.common_threats %}
-                            <p style="color: var(--text-muted);">No threat logs present to map metrics.</p>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">No threat logs present to map metrics.</p>
                         {% else %}
                             <div class="table-responsive">
-                                <table style="font-size: 0.9rem;">
+                                <table style="font-size: 0.85rem;">
                                     <thead>
                                         <tr>
                                             <th>File Name</th>
@@ -177,12 +184,12 @@
                                         {% for threat in stats.common_threats %}
                                         <tr>
                                             <td style="font-family: var(--font-mono);">{{ threat.file_name }}</td>
-                                            <td style="font-weight: 700; color: var(--aqua);">{{ threat.count }}x</td>
+                                            <td style="font-weight: 700; color: var(--accent);">{{ threat.count }}x</td>
                                             <td>
                                                 {% if threat.risk_level == 'DANGEROUS' %}
-                                                    <span class="badge danger" style="padding: 0.1rem 0.3rem; font-size: 0.7rem;">DANGEROUS</span>
+                                                    <span class="badge danger" style="padding: 0.1rem 0.3rem; font-size: 0.65rem;">DANGEROUS</span>
                                                 {% else %}
-                                                    <span class="badge warning" style="padding: 0.1rem 0.3rem; font-size: 0.7rem;">SUSPICIOUS</span>
+                                                    <span class="badge warning" style="padding: 0.1rem 0.3rem; font-size: 0.65rem;">SUSPICIOUS</span>
                                                 {% endif %}
                                             </td>
                                         </tr>
@@ -194,16 +201,16 @@
                     </div>
 
                     <!-- Detection Layer Stats -->
-                    <div style="background: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: 8px; padding: 2rem;">
-                        <h4 style="color: var(--cyan); margin-bottom: 1rem;"><i class="fa-solid fa-layer-group"></i> Detections by Scanning Layer</h4>
+                    <div style="background: var(--bg-secondary); border: 1px solid var(--border-glass); border-radius: 4px; padding: 1.5rem;">
+                        <h4 style="color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem;"><i class="fa-solid fa-layer-group"></i> Layer Diagnostics</h4>
                         {% if not stats.detection_layers %}
-                            <p style="color: var(--text-muted);">No layer telemetry present.</p>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">No layer telemetry present.</p>
                         {% else %}
-                            <ul style="list-style-type: none; display: grid; gap: 1rem;">
+                            <ul style="list-style-type: none; display: grid; gap: 0.75rem;">
                                 {% for layer, count in stats.detection_layers.items() %}
-                                <li style="background: var(--bg-secondary); padding: 1rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="font-weight: 600;"><i class="fa-solid fa-shield-halved" style="color: var(--aqua); margin-right: 0.5rem;"></i> {{ layer }}</span>
-                                    <span style="background: linear-gradient(135deg, var(--aqua), var(--cyan)); color: var(--bg-primary); padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 800; font-family: var(--font-mono); font-size: 0.9rem;">
+                                <li style="background: var(--bg-primary); padding: 0.75rem 1rem; border-radius: 4px; border: 1px solid var(--border-glass); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                                    <span style="font-weight: 600; color: var(--text-main);"><i class="fa-solid fa-shield-halved" style="color: var(--text-muted); margin-right: 0.5rem;"></i> {{ layer }}</span>
+                                    <span style="background: var(--accent); color: var(--bg-primary); padding: 0.15rem 0.5rem; border-radius: 2px; font-weight: 800; font-family: var(--font-mono); font-size: 0.8rem;">
                                         {{ count }}
                                     </span>
                                 </li>
@@ -219,7 +226,7 @@
     </div>
 
     <footer>
-        <p>&copy; 2026 ANSH9BOSS. All telemetry data is stored and displayed locally on your device.</p>
+        <p>&copy; 2026 CheatsAnalyser. Admin dashboard metrics stored locally.</p>
     </footer>
 
     <script>
@@ -267,7 +274,6 @@
                     feedback.className = "feedback-msg success";
                     feedback.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + data.message;
                     feedback.style.display = "block";
-                    // Reload window shortly to update version string
                     setTimeout(() => {
                         window.location.reload();
                     }, 1200);
