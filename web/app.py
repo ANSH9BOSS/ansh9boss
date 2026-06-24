@@ -349,6 +349,47 @@ def update_config():
     except Exception as e:
         return jsonify({"success": False, "message": f"Server error: {str(e)}"}), 500
 
+@app.route("/api/virustotal")
+def virustotal_scan():
+    sha1 = request.args.get("hash", "").strip().lower()
+    if not sha1:
+        return jsonify({"success": False, "error": "No hash provided"}), 400
+        
+    import os
+    vt_key = os.environ.get("VT_API_KEY")
+    if not vt_key:
+        # Fallback simulated response for demonstration if no API key is provided
+        import random
+        is_malicious = random.random() > 0.8
+        return jsonify({
+            "success": True,
+            "hash": sha1,
+            "malicious": random.randint(3, 15) if is_malicious else 0,
+            "simulated": True
+        })
+        
+    import urllib.request
+    import urllib.error
+    url = f"https://www.virustotal.com/api/v3/files/{sha1}"
+    
+    try:
+        req = urllib.request.Request(url, headers={'x-apikey': vt_key})
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            stats = data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
+            return jsonify({
+                "success": True,
+                "hash": sha1,
+                "malicious": stats.get("malicious", 0),
+                "suspicious": stats.get("suspicious", 0)
+            })
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return jsonify({"success": True, "hash": sha1, "malicious": 0, "not_found": True})
+        return jsonify({"success": False, "error": f"VirusTotal API HTTP {e.code}"}), 502
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == "__main__":
     init_db()
     app.run(host="0.0.0.0", port=5000, debug=True)

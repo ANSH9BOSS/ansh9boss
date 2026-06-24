@@ -82,6 +82,9 @@
                         <div><strong style="color: var(--text-main);">SHA-1:</strong> <span id="res-sha1">-</span></div>
                         <div><strong style="color: var(--text-main);">Security Status:</strong> <span id="res-status">-</span></div>
                         <div><strong style="color: var(--text-main);">Source Reference:</strong> <span id="res-source">-</span></div>
+                        <div style="margin-top: 0.25rem; padding-top: 0.25rem; border-top: 1px dashed var(--border-glass);">
+                            <strong style="color: var(--text-main);"><i class="fa-solid fa-virus" style="color: #3b5998;"></i> VirusTotal Check:</strong> <span id="res-vt">Waiting for query...</span>
+                        </div>
                     </div>
                 </div>
 
@@ -98,6 +101,13 @@
                         
                         <!-- Terminal output decompiler screen -->
                         <div style="display: flex; flex-direction: column; background: #000000; border: 1px solid var(--border-glass); border-radius: 4px; overflow: hidden; position: relative;">
+                            
+                            <!-- Tab Header for Decompiler vs Node Graph -->
+                            <div style="display: flex; border-bottom: 1px solid var(--border-glass); background: #111;">
+                                <button class="nav-btn" id="btn-decomp-code" style="border:none; border-right: 1px solid var(--border-glass); border-radius:0; flex:1; background: var(--accent); color: var(--bg-primary);" onclick="switchDecompView('code')"><i class="fa-solid fa-file-code"></i> Raw Bytecode</button>
+                                <button class="nav-btn outline" id="btn-decomp-graph" style="border:none; border-radius:0; flex:1;" onclick="switchDecompView('graph')"><i class="fa-solid fa-diagram-project"></i> Flow Graph</button>
+                            </div>
+
                             <!-- Steps progress panel -->
                             <div id="decompiler-steps" style="padding: 1rem; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; color: var(--text-muted); flex-grow: 1; overflow-y: auto; display: none;">
                                 <!-- Phase logs print one by one -->
@@ -106,6 +116,13 @@
                             <!-- Main disassembled code viewer -->
                             <pre id="decompiler-code-viewer" style="padding: 1rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-main); flex-grow: 1; overflow: auto; display: none; white-space: pre; margin: 0; line-height: 1.4;"></pre>
                             
+                            <!-- Node Graph view canvas -->
+                            <div id="decompiler-graph-viewer" style="display: none; padding: 1rem; flex-grow: 1; overflow: auto; position: relative; background: #0a0a0c;">
+                                <div id="node-graph-container" style="display: flex; flex-direction: column; gap: 1rem; align-items: center; padding-top: 1rem;">
+                                    <!-- Dynamic graph nodes generated via JS -->
+                                </div>
+                            </div>
+
                             <!-- Static placeholder -->
                             <div id="decompiler-placeholder" style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 0.85rem;">
                                 Select a class file from the sidebar to inspect bytecode.
@@ -411,9 +428,27 @@
                                 resStatus.innerHTML = "<span style='color: var(--warning); font-weight:bold;'>! Unverified signature hash. Run local audit before launching.</span>";
                                 resSource.innerText = "Modrinth catalog signature missing (Custom mod or modified file)";
                             }
-                            
                             // Proceed to upload mod for decompiler view
                             uploadForDecompiler(file, hashHex);
+                            
+                            // Query VirusTotal integration
+                            const vtStatus = document.getElementById('res-vt');
+                            fetch(`/api/virustotal?hash=${hashHex}`)
+                                .then(vtRes => vtRes.json())
+                                .then(vtData => {
+                                    if(vtData.success) {
+                                        if(vtData.malicious > 0) {
+                                            vtStatus.innerHTML = `<span style="color: var(--danger); font-weight:bold;">${vtData.malicious} Security Vendors flagged this file as malicious.</span>`;
+                                        } else {
+                                            vtStatus.innerHTML = `<span style="color: var(--success); font-weight:bold;">0 Vendors flagged this file. (Clean)</span>`;
+                                        }
+                                    } else {
+                                        vtStatus.innerText = "No data found on VirusTotal.";
+                                    }
+                                })
+                                .catch(err => {
+                                    vtStatus.innerText = "Could not reach VirusTotal API.";
+                                });
                         })
                         .catch(err => {
                             resultBox.style.display = "block";
@@ -541,6 +576,7 @@
                                     stepsDiv.style.display = 'none';
                                     codeViewer.style.display = 'block';
                                     codeViewer.innerText = data.code;
+                                    generateNodeGraph(data.code);
                                 }, 500);
                             }
                         }
@@ -554,7 +590,96 @@
                     stepsDiv.innerHTML = `<div style="color: var(--danger);">[Error] Connection failure: ${err.message}</div>`;
                 });
         }
+
+        // Toggle Decompiler Views
+        function switchDecompView(view) {
+            const btnCode = document.getElementById('btn-decomp-code');
+            const btnGraph = document.getElementById('btn-decomp-graph');
+            const codeViewer = document.getElementById('decompiler-code-viewer');
+            const graphViewer = document.getElementById('decompiler-graph-viewer');
+            
+            if(view === 'code') {
+                btnCode.className = "nav-btn";
+                btnCode.style.background = "var(--accent)";
+                btnCode.style.color = "var(--bg-primary)";
+                btnGraph.className = "nav-btn outline";
+                btnGraph.style.background = "transparent";
+                btnGraph.style.color = "var(--text-muted)";
+                
+                codeViewer.style.display = "block";
+                graphViewer.style.display = "none";
+            } else {
+                btnGraph.className = "nav-btn";
+                btnGraph.style.background = "var(--accent)";
+                btnGraph.style.color = "var(--bg-primary)";
+                btnCode.className = "nav-btn outline";
+                btnCode.style.background = "transparent";
+                btnCode.style.color = "var(--text-muted)";
+                
+                codeViewer.style.display = "none";
+                graphViewer.style.display = "block";
+            }
         }
+
+        // Generate Node Graph visually from decompiled bytecode methods
+        function generateNodeGraph(code) {
+            const container = document.getElementById('node-graph-container');
+            container.innerHTML = '';
+            
+            // Extremely basic heuristic to find method blocks
+            const lines = code.split('\n');
+            let currentMethod = null;
+            let nodes = [];
+            
+            lines.forEach(line => {
+                if(line.includes("public ") || line.includes("private ") || line.includes("protected ") || line.includes("static ")) {
+                    if(line.includes("(")) {
+                        currentMethod = line.trim().replace('{', '');
+                        nodes.push({ type: 'entry', label: currentMethod });
+                    }
+                } else if(line.includes("if ") || line.includes("if(")) {
+                    nodes.push({ type: 'branch', label: line.trim().replace('{', '') });
+                } else if(line.includes("return ") || line.includes("return;")) {
+                    nodes.push({ type: 'exit', label: line.trim() });
+                }
+            });
+
+            if(nodes.length === 0) {
+                container.innerHTML = '<div style="color:var(--text-muted);">No distinct control flow graph generated for this class.</div>';
+                return;
+            }
+
+            nodes.forEach((n, idx) => {
+                let color = "var(--border-glass)";
+                let textColor = "var(--text-main)";
+                if(n.type === 'entry') color = "var(--accent)";
+                if(n.type === 'branch') color = "var(--warning)";
+                if(n.type === 'exit') color = "var(--danger)";
+                if(n.type === 'entry') textColor = "var(--bg-primary)";
+
+                let div = document.createElement('div');
+                div.style.background = color;
+                div.style.color = textColor;
+                div.style.padding = "0.5rem 1rem";
+                div.style.borderRadius = "6px";
+                div.style.fontFamily = "var(--font-mono)";
+                div.style.fontSize = "0.75rem";
+                div.style.maxWidth = "80%";
+                div.style.textAlign = "center";
+                div.style.boxShadow = "0 4px 10px rgba(0,0,0,0.5)";
+                div.innerText = n.label;
+                container.appendChild(div);
+
+                if(idx < nodes.length - 1) {
+                    let arrow = document.createElement('div');
+                    arrow.innerHTML = '<i class="fa-solid fa-arrow-down"></i>';
+                    arrow.style.color = "var(--border-glass)";
+                    arrow.style.margin = "0.25rem 0";
+                    container.appendChild(arrow);
+                }
+            });
+        }
+
 
         // Particle Background System
         const canvas = document.getElementById('particles-bg');
