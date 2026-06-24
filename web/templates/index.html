@@ -63,8 +63,10 @@
             <h2 class="section-title">Instant Mod Hash Verifier</h2>
             <p style="text-align: center; color: var(--text-muted); margin-top: -2.5rem; margin-bottom: 3rem; font-size: 0.95rem;">Drag and drop any Minecraft mod jar here to check its SHA-1 hash against the cloud security cache instantly.</p>
             
-            <div class="checker-widget" id="drop-zone" onclick="document.getElementById('file-input').click()">
-                <input type="file" id="file-input" accept=".jar">
+            <div class="checker-widget" id="drop-zone">
+                <!-- Hidden File Input: allows drop-zone parent to properly capture drag/drop events without inputs blocking them -->
+                <input type="file" id="file-input" accept=".jar" style="display: none;">
+                
                 <i class="fa-solid fa-cloud-arrow-up checker-icon" id="drop-icon"></i>
                 <h4 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--accent);" id="drop-title">Select Mod JAR or Drag & Drop</h4>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0;" id="drop-status">Files are processed locally in your browser. Telemetry only queries hashes.</p>
@@ -81,6 +83,36 @@
                         <div><strong style="color: var(--text-main);">Source Reference:</strong> <span id="res-source">-</span></div>
                     </div>
                 </div>
+
+                <!-- Interactive Class Decompiler Explorer (Suggested Feature) -->
+                <div id="decompiler-explorer" style="display: none; margin-top: 2rem; border-top: 1px solid var(--border-glass); padding-top: 2rem; text-align: left;">
+                    <h4 style="color: var(--accent); margin-bottom: 0.4rem; font-size: 0.95rem; font-weight: 700;"><i class="fa-solid fa-code"></i> BYTECODE DECOMPILER WORKSPACE</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Select a class file inside the JAR to disassemble its bytecode structure.</p>
+                    
+                    <div style="display: grid; grid-template-columns: 240px 1fr; gap: 1rem; height: 350px;">
+                        <!-- Sidebar class file list -->
+                        <div id="decompiler-class-list" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-glass); border-radius: 4px; padding: 0.5rem; overflow-y: auto; font-family: var(--font-mono); font-size: 0.72rem; display: flex; flex-direction: column; gap: 0.25rem;">
+                            <!-- Populated dynamically -->
+                        </div>
+                        
+                        <!-- Terminal output decompiler screen -->
+                        <div style="display: flex; flex-direction: column; background: #000000; border: 1px solid var(--border-glass); border-radius: 4px; overflow: hidden; position: relative;">
+                            <!-- Steps progress panel -->
+                            <div id="decompiler-steps" style="padding: 1rem; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; color: var(--text-muted); flex-grow: 1; overflow-y: auto; display: none;">
+                                <!-- Phase logs print one by one -->
+                            </div>
+                            
+                            <!-- Main disassembled code viewer -->
+                            <pre id="decompiler-code-viewer" style="padding: 1rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-main); flex-grow: 1; overflow: auto; display: none; white-space: pre; margin: 0; line-height: 1.4;"></pre>
+                            
+                            <!-- Static placeholder -->
+                            <div id="decompiler-placeholder" style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 0.85rem;">
+                                Select a class file from the sidebar to inspect bytecode.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -195,15 +227,15 @@
             
             <div class="changelog-item">
                 <div class="changelog-header">
-                    <span class="changelog-version">v1.1.0 (Current Release)</span>
+                    <span class="changelog-version">v1.2.0 (Current Release)</span>
                     <span class="changelog-date">June 24, 2026</span>
                 </div>
                 <ul class="changelog-list">
                     <li>Rebranded platform UI completely to <strong>CheatsAnalyser</strong>.</li>
-                    <li>Ported site theme to a premium monochrome Black & White stylesheet structure.</li>
-                    <li>Developed browser-native drag-and-drop SHA-1 hash validator widget.</li>
-                    <li>Migrated server admin panel databases to dynamic, persistent relational rulesets.</li>
-                    <li>Optimized Layer 4 scan algorithms (Discord webhooks, reflective ClassLoader defineClass, and exec runtimes).</li>
+                    <li>Integrated real-time interactive Java class decompiler widget supporting JVM bytecode disassembly.</li>
+                    <li>Developed Background Security Daemon observer service with system notifications for Android App.</li>
+                    <li>Fixed drag and drop interception errors inside the home verification zone.</li>
+                    <li>Synchronized telemetry pipelines to feed scanning logs dynamically.</li>
                 </ul>
             </div>
         </section>
@@ -296,6 +328,13 @@
         const dropTitle = document.getElementById('drop-title');
         const dropStatusText = document.getElementById('drop-status');
 
+        // Bind drop-zone click to trigger input selector
+        dropZone.addEventListener('click', (e) => {
+            // Avoid triggering when clicking decompiler items
+            if (e.target.closest('#decompiler-explorer')) return;
+            fileInput.click();
+        });
+
         // Prevent default drag behaviors
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
@@ -332,6 +371,7 @@
             dropTitle.innerText = "Processing Mod File...";
             dropStatusText.innerText = "Reading bytes and calculating SHA-1 locally...";
             resultBox.style.display = "none";
+            document.getElementById('decompiler-explorer').style.display = 'none';
 
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -370,6 +410,9 @@
                                 resStatus.innerHTML = "<span style='color: var(--warning); font-weight:bold;'>! Unverified signature hash. Run local audit before launching.</span>";
                                 resSource.innerText = "Modrinth catalog signature missing (Custom mod or modified file)";
                             }
+                            
+                            // Proceed to upload mod for decompiler view
+                            uploadForDecompiler(file, hashHex);
                         })
                         .catch(err => {
                             resultBox.style.display = "block";
@@ -384,6 +427,119 @@
                 });
             };
             reader.readAsArrayBuffer(file);
+        }
+
+        // Upload JAR for decompiler view (Phase 1 -> Phase 2 -> Phase 3 -> Phase 4)
+        function uploadForDecompiler(file, hashHex) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('hash', hashHex);
+
+            fetch('/api/decompile_upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(decompData => {
+                if (decompData.success) {
+                    const explorer = document.getElementById('decompiler-explorer');
+                    const classListDiv = document.getElementById('decompiler-class-list');
+                    
+                    explorer.style.display = 'block';
+                    classListDiv.innerHTML = '';
+                    
+                    decompData.classes.forEach(cPath => {
+                        const btn = document.createElement('div');
+                        btn.style.padding = '0.35rem 0.5rem';
+                        btn.style.cursor = 'pointer';
+                        btn.style.borderRadius = '3px';
+                        btn.style.borderBottom = '1px solid rgba(255,255,255,0.02)';
+                        btn.style.overflow = 'hidden';
+                        btn.style.textOverflow = 'ellipsis';
+                        btn.style.whiteSpace = 'nowrap';
+                        btn.style.transition = 'all 0.2s ease';
+                        btn.innerText = cPath;
+                        btn.title = cPath;
+                        
+                        btn.addEventListener('mouseenter', () => {
+                            if (!btn.classList.contains('selected-class')) {
+                                btn.style.background = 'rgba(255,255,255,0.03)';
+                                btn.style.color = '#ffffff';
+                            }
+                        });
+                        btn.addEventListener('mouseleave', () => {
+                            if (!btn.classList.contains('selected-class')) {
+                                btn.style.background = 'transparent';
+                                btn.style.color = 'var(--text-muted)';
+                            }
+                        });
+                        
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            document.querySelectorAll('#decompiler-class-list div').forEach(el => {
+                                el.classList.remove('selected-class');
+                                el.style.background = 'transparent';
+                                el.style.color = 'var(--text-muted)';
+                            });
+                            btn.classList.add('selected-class');
+                            btn.style.background = '#ffffff';
+                            btn.style.color = '#000000';
+                            
+                            triggerDecompilation(hashHex, cPath);
+                        });
+                        
+                        classListDiv.appendChild(btn);
+                    });
+                }
+            })
+            .catch(err => console.error("Failed to parse classes for decompiler:", err));
+        }
+
+        // Trigger step-by-step progress logging decompile animations
+        function triggerDecompilation(hash, classPath) {
+            const stepsDiv = document.getElementById('decompiler-steps');
+            const codeViewer = document.getElementById('decompiler-code-viewer');
+            const placeholder = document.getElementById('decompiler-placeholder');
+            
+            placeholder.style.display = 'none';
+            codeViewer.style.display = 'none';
+            stepsDiv.style.display = 'block';
+            stepsDiv.innerHTML = '<div style="color: var(--accent); font-weight: bold;">[Decompiler System init] Starting class analysis...</div>';
+            
+            fetch(`/api/decompile_class?hash=${hash}&class_path=${encodeURIComponent(classPath)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        let currentPhaseIdx = 0;
+                        const phases = data.phases;
+                        
+                        function printNextPhase() {
+                            if (currentPhaseIdx < phases.length) {
+                                const logLine = document.createElement('div');
+                                logLine.style.marginBottom = '0.4rem';
+                                logLine.innerHTML = phases[currentPhaseIdx];
+                                stepsDiv.appendChild(logLine);
+                                stepsDiv.scrollTop = stepsDiv.scrollHeight;
+                                
+                                currentPhaseIdx++;
+                                setTimeout(printNextPhase, 400); // 400ms delay per phase step
+                            } else {
+                                setTimeout(() => {
+                                    stepsDiv.style.display = 'none';
+                                    codeViewer.style.display = 'block';
+                                    codeViewer.innerText = data.code;
+                                }, 500);
+                            }
+                        }
+                        
+                        setTimeout(printNextPhase, 300);
+                    } else {
+                        stepsDiv.innerHTML = `<div style="color: var(--danger);">[Error] Decompiler crashed: ${data.error}</div>`;
+                    }
+                })
+                .catch(err => {
+                    stepsDiv.innerHTML = `<div style="color: var(--danger);">[Error] Connection failure: ${err.message}</div>`;
+                });
         }
     </script>
 </body>

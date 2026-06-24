@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
 import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
@@ -54,6 +55,40 @@ class MainActivity : AppCompatActivity() {
         ivScannerLogo = findViewById(R.id.ivScannerLogo)
         viewGlowRing = findViewById(R.id.viewGlowRing)
         tvCurrentFileName = findViewById(R.id.tvCurrentFileName)
+
+        val btnToggleDaemon = findViewById<Button>(R.id.btnToggleDaemon)
+        var daemonActive = false
+
+        btnToggleDaemon.setOnClickListener {
+            val uri = selectedFolderUri
+            if (uri == null) {
+                logToConsole("<font color='#EF4444'>! Linked mods directory required to enable daemon.</font>", true)
+            } else {
+                if (!daemonActive) {
+                    val serviceIntent = Intent(this, SecurityDaemonService::class.java).apply {
+                        putExtra("observe_uri", uri.toString())
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(serviceIntent)
+                    } else {
+                        startService(serviceIntent)
+                    }
+                    daemonActive = true
+                    btnToggleDaemon.text = "DAEMON GUARD: ACTIVE"
+                    btnToggleDaemon.setTextColor(android.graphics.Color.parseColor("#10B981"))
+                    logToConsole("<font color='#10B981'>✓ Security Daemon Guard running in background.</font>", true)
+                } else {
+                    val stopIntent = Intent(this, SecurityDaemonService::class.java).apply {
+                        action = "STOP_DAEMON"
+                    }
+                    startService(stopIntent)
+                    daemonActive = false
+                    btnToggleDaemon.text = "DAEMON GUARD: INACTIVE"
+                    btnToggleDaemon.setTextColor(android.graphics.Color.parseColor("#A1A1AA"))
+                    logToConsole("<font color='#71717A'>! Security Daemon Guard disabled.</font>", true)
+                }
+            }
+        }
 
         dbHelper = ScanHistoryDbHelper(this)
         startIdleGlowAnimation()

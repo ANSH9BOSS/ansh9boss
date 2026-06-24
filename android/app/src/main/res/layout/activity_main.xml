@@ -45,8 +45,8 @@
         app:layout_constraintBottom_toTopOf="@id/layoutCurrentFile"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp">
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp">
 
         <!-- Outer Ring Glow -->
         <View
@@ -140,10 +140,10 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSelectFolder"
         android:layout_width="0dp"
-        android:layout_height="50dp"
+        android:layout_height="48dp"
         android:text="LINK MODS DIRECTORY"
         android:textColor="#FFFFFF"
-        android:textSize="12sp"
+        android:textSize="11sp"
         android:textStyle="bold"
         android:letterSpacing="0.08"
         app:backgroundTint="#000000"
@@ -158,25 +158,44 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnStartScan"
         android:layout_width="0dp"
-        android:layout_height="50dp"
+        android:layout_height="48dp"
         android:text="START SYSTEM SCAN"
         android:textColor="#000000"
-        android:textSize="13sp"
+        android:textSize="12sp"
         android:textStyle="bold"
         android:letterSpacing="0.1"
         android:enabled="false"
         app:backgroundTint="#FFFFFF"
         app:cornerRadius="4dp"
+        app:layout_constraintBottom_toTopOf="@id/btnToggleDaemon"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Background daemon observer switch button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnToggleDaemon"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:text="DAEMON GUARD: INACTIVE"
+        android:textColor="#A1A1AA"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.1"
+        app:backgroundTint="#09090B"
+        app:strokeColor="#27272A"
+        app:strokeWidth="1dp"
+        app:cornerRadius="4dp"
         app:layout_constraintBottom_toTopOf="@id/scrollView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="12dp" />
 
     <!-- Minimal scrollable console -->
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="0dp"
-        android:layout_height="140dp"
+        android:layout_height="110dp"
         android:background="#09090B"
         android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -1,30 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="100dp"
-    android:height="100dp"
+    android:width="120dp"
+    android:height="120dp"
     android:viewportWidth="100"
     android:viewportHeight="100">
     <!-- Pure Black Background -->
     <path
         android:fillColor="#000000"
         android:pathData="M 0,0 L 100,0 L 100,100 L 0,100 Z"/>
-    <!-- Minimal white border grid -->
+    
+    <!-- Fine monochrome background grid to match the website style -->
     <path
-        android:strokeColor="#27272A"
-        android:strokeWidth="1.5"
-        android:pathData="M 20,10 L 80,10 L 90,40 L 50,90 L 10,40 Z"/>
-    <!-- Outer white radar ring -->
+        android:strokeColor="#18181B"
+        android:strokeWidth="0.5"
+        android:pathData="M 10,0 L 10,100 M 20,0 L 20,100 M 30,0 L 30,100 M 40,0 L 40,100 M 50,0 L 50,100 M 60,0 L 60,100 M 70,0 L 70,100 M 80,0 L 80,100 M 90,0 L 90,100"/>
+    <path
+        android:strokeColor="#18181B"
+        android:strokeWidth="0.5"
+        android:pathData="M 0,10 L 100,10 M 0,20 L 100,20 M 0,30 L 100,30 M 0,40 L 100,40 M 0,50 L 100,50 M 0,60 L 100,60 M 0,70 L 100,70 M 0,80 L 100,80 M 0,90 L 100,90"/>
+
+    <!-- Concentric radar circles matching website animated SVG -->
     <path
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="3.5"
-        android:pathData="M 50,15 A 35,35 0 1, 1 49.99,15 Z"/>
-    <!-- Crosshairs -->
+        android:strokeWidth="1.2"
+        android:pathData="M 50,5 A 45,45 0 1,1 49.99,5 Z"
+        android:fillColor="#00000000"
+        android:strokeAlpha="0.3"/>
     <path
-        android:strokeColor="#A1A1AA"
-        android:strokeWidth="1.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.0"
+        android:pathData="M 50,20 A 30,30 0 1,1 49.99,20 Z"
+        android:fillColor="#00000000"
+        android:strokeAlpha="0.2"/>
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.0"
+        android:pathData="M 50,35 A 15,15 0 1,1 49.99,35 Z"
+        android:fillColor="#00000000"
+        android:strokeAlpha="0.1"/>
+
+    <!-- Crosshair coordinate grid lines -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.75"
+        android:strokeAlpha="0.2"
         android:pathData="M 50,5 L 50,95 M 5,50 L 95,50"/>
-    <!-- Center white core circle -->
+
+    <!-- Radar Sweep Hand Line pointing to target angle -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M 50,50 L 82,18"/>
+
+    <!-- Radar Target Ping Dot -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M 50,42 A 8,8 0 1, 1 49.99,42 Z"/>
+        android:pathData="M 72,32 A 2.5,2.5 0 1, 1 71.99,32 Z"/>
 </vector>
