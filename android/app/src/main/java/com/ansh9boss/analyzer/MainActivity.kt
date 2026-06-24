@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scrollView: ScrollView
     private lateinit var ivScannerLogo: ImageView
     private lateinit var viewGlowRing: View
+    private lateinit var tvCurrentFileName: TextView
 
     private var selectedFolderUri: Uri? = null
     private val executor = Executors.newSingleThreadExecutor()
@@ -51,6 +52,7 @@ class MainActivity : AppCompatActivity() {
         scrollView = findViewById(R.id.scrollView)
         ivScannerLogo = findViewById(R.id.ivScannerLogo)
         viewGlowRing = findViewById(R.id.viewGlowRing)
+        tvCurrentFileName = findViewById(R.id.tvCurrentFileName)
 
         startIdleGlowAnimation()
 
@@ -82,6 +84,7 @@ class MainActivity : AppCompatActivity() {
                 contentResolver.takePersistableUriPermission(treeUri, takeFlags)
 
                 logToConsole("linked directory: ${treeUri.path}\nReady to scan. Click 'Start Scan'.")
+                tvCurrentFileName.text = "DIRECTORY LINKED"
                 btnStartScan.isEnabled = true
             }
         }
@@ -93,6 +96,7 @@ class MainActivity : AppCompatActivity() {
         progressBar.visibility = View.VISIBLE
         progressBar.isIndeterminate = true
         tvConsole.text = ""
+        tvCurrentFileName.text = "INITIALIZING SCANNER..."
         logToConsole("Initializing ANSH9BOSS Android Engine v${Config.VERSION}...")
         logToConsole("Platform: ANDROID (Scoped Storage SAF Bypass)")
         logToConsole("Scanning folder hierarchy, please wait...\n")
@@ -111,6 +115,7 @@ class MainActivity : AppCompatActivity() {
 
                 val totalJars = jarFiles.size
                 runOnUiThread {
+                    tvCurrentFileName.text = "FOUND $totalJars MOD FILES"
                     logToConsole("Found $totalJars mod jar file(s) to analyze.")
                     progressBar.isIndeterminate = false
                     progressBar.max = totalJars
@@ -125,6 +130,7 @@ class MainActivity : AppCompatActivity() {
                 for ((index, docFile) in jarFiles.withIndex()) {
                     val name = docFile.name ?: "UnknownMod.jar"
                     runOnUiThread {
+                        tvCurrentFileName.text = "SCANNING: $name"
                         logToConsole("[$index/$totalJars] Scanning $name...")
                     }
 
@@ -173,6 +179,7 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     ivScannerLogo.clearAnimation()
                     startIdleGlowAnimation()
+                    tvCurrentFileName.text = "COMPLETED. FLAGGED $totalFlagged THREATS"
 
                     if (reported) {
                         logToConsole("✓ Telemetry successfully reported globally to https://ansh9boss.vercel.app")
@@ -189,6 +196,7 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     ivScannerLogo.clearAnimation()
                     startIdleGlowAnimation()
+                    tvCurrentFileName.text = "SCAN ERROR"
 
                     logToConsole("Error during scan task execution: ${e.message}")
                     btnStartScan.isEnabled = true
