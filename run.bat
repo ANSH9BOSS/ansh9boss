@@ -1,5 +1,5 @@
 @echo off
-title ANSH9BOSS - Auto Installer & Runner
+title ANSH9BOSS - Auto Installer
 echo =============================================
 echo    ANSH9BOSS - AUTO INSTALLER AND RUNNER       
 echo =============================================
@@ -10,7 +10,7 @@ if %errorlevel% neq 0 (
     echo [-] Python is not installed or not in PATH.
     echo [+] Opening Python download page...
     start https://www.python.org/downloads/
-    echo Please install Python (ensure you check "Add Python to PATH") and restart this script.
+    echo Please install Python, ensure you check "Add Python to PATH", and restart this script.
     pause
     exit /b 1
 )
