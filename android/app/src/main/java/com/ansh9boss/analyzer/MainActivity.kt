@@ -401,6 +401,7 @@ class MainActivity : AppCompatActivity() {
                     Config.knownCheats = newCheats
                     Config.knownPackages = newPackages
                     Config.cheatStrings = newStrings
+                    Config.autoQuarantine = json.optBoolean("auto_quarantine", false)
 
                     runOnUiThread {
                         logToConsole("<font color='#10B981'>✓ Dynamic Cloud Rules synced successfully (v${json.getString("version")}).</font>", true)

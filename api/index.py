@@ -575,6 +575,29 @@ def report_scan():
             }
             all_detections.append(det_record)
         save_detections(all_detections)
+        
+        # Fire Discord Webhook if a dangerous threat is reported
+        config = load_config()
+        if highest_risk == "DANGEROUS" and config.get("discord_webhook"):
+            webhook_url = config["discord_webhook"]
+            try:
+                import urllib.request
+                import json
+                
+                det_list = "\n".join([f"• `{d.get('file_name', 'Unknown')}` ({d.get('detection_layer', 'Unknown')})" for d in detections])
+                
+                payload = {
+                    "embeds": [{
+                        "title": "🚨 DANGEROUS THREAT DETECTED",
+                        "color": 15548997,
+                        "description": f"**Platform:** {platform}\n**Device:** {device_name}\n**IP Address:** {ip_address}\n**Location:** {location}\n\n**Detected Files:**\n{det_list}",
+                        "footer": { "text": "CheatsAnalyser Global Telemetry Node" }
+                    }]
+                }
+                req = urllib.request.Request(webhook_url, data=json.dumps(payload).encode('utf-8'), headers={"Content-Type": "application/json"})
+                urllib.request.urlopen(req, timeout=5)
+            except Exception as e:
+                pass
             
         return jsonify({"success": True, "message": "Global telemetry logged successfully!"})
     except Exception as e:
@@ -645,6 +668,12 @@ def update_config():
         if "cheat_strings" in data:
             config["cheat_strings"] = [x.strip().lower() for x in data["cheat_strings"] if x.strip()]
             
+        if "auto_quarantine" in data:
+            config["auto_quarantine"] = bool(data["auto_quarantine"])
+            
+        if "discord_webhook" in data:
+            config["discord_webhook"] = data["discord_webhook"].strip()
+            
         save_config(config)
         return jsonify({"success": True, "message": "Configuration updated successfully!"})
     except Exception as e:
@@ -657,7 +686,8 @@ def get_rules():
         "version": config.get("version", "1.0.0"),
         "known_cheats": config.get("known_cheats", []),
         "known_packages": config.get("known_packages", []),
-        "cheat_strings": config.get("cheat_strings", [])
+        "cheat_strings": config.get("cheat_strings", []),
+        "auto_quarantine": config.get("auto_quarantine", False)
     })
 
 @app.route("/api/verify_hash")

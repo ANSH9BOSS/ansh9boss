@@ -167,6 +167,23 @@
                         <p>Suspicious strings compiled into Java class constant pools (e.g. <i>killaura, esp, xray</i>). Supports basic YARA-style matching phrases.</p>
                         <textarea id="cheat-strings">{{ config.cheat_strings | join(', ') }}</textarea>
                     </div>
+
+                    <!-- Android Auto-Quarantine -->
+                    <div class="config-group">
+                        <h4 style="color: var(--danger);"><i class="fa-solid fa-shield-virus"></i> Auto-Quarantine Modules</h4>
+                        <p>If active, the Android Daemon will immediately rename detected malicious JAR files to .quarantine to block them from loading.</p>
+                        <select id="auto-quarantine" class="form-control" style="max-width: 200px; background: #000; color: #fff;">
+                            <option value="true" {% if config.auto_quarantine %}selected{% endif %}>Enabled (Aggressive)</option>
+                            <option value="false" {% if not config.auto_quarantine %}selected{% endif %}>Disabled (Alert Only)</option>
+                        </select>
+                    </div>
+
+                    <!-- Discord Webhook -->
+                    <div class="config-group">
+                        <h4 style="color: #5865F2;"><i class="fa-brands fa-discord"></i> Global Webhook Alerts</h4>
+                        <p>Paste a Discord or Telegram webhook URL. The system will dispatch an alert when a DANGEROUS threat is detected worldwide.</p>
+                        <input type="text" id="discord-webhook" class="form-control" placeholder="https://discord.com/api/webhooks/..." value="{{ config.discord_webhook | default('') }}">
+                    </div>
                 </div>
 
                 <div class="feedback-msg" id="feedback"></div>
@@ -333,6 +350,8 @@
             const knownCheats = document.getElementById("known-cheats").value.split(",").map(s => s.trim());
             const knownPackages = document.getElementById("known-packages").value.split(",").map(s => s.trim());
             const cheatStrings = document.getElementById("cheat-strings").value.split(",").map(s => s.trim());
+            const autoQuarantine = document.getElementById("auto-quarantine").value === "true";
+            const discordWebhook = document.getElementById("discord-webhook").value.trim();
 
             const feedback = document.getElementById("feedback");
             feedback.style.display = "none";
@@ -347,7 +366,9 @@
                     version: version,
                     known_cheats: knownCheats,
                     known_packages: knownPackages,
-                    cheat_strings: cheatStrings
+                    cheat_strings: cheatStrings,
+                    auto_quarantine: autoQuarantine,
+                    discord_webhook: discordWebhook
                 })
             })
             .then(res => res.json())
@@ -370,7 +391,6 @@
                 feedback.innerHTML = '<i class="fa-solid fa-circle-xmark"></i> Network error: ' + err.message;
                 feedback.style.display = "block";
             });
-        }
         }
 
         // Particle Background System
