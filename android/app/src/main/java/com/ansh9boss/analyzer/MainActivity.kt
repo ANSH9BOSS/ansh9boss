@@ -176,19 +176,19 @@ class MainActivity : AppCompatActivity() {
         executor.execute {
             try {
                 val rootDoc = DocumentFile.fromTreeUri(this, treeUri)
-                val jarFiles = mutableListOf<DocumentFile>()
+                val appFiles = mutableListOf<DocumentFile>()
                 
-                // Traverse directory and gather JAR files
+                // Traverse directory and gather JAR/APK files
                 if (rootDoc != null) {
-                    findJarFilesRecursively(rootDoc, jarFiles)
+                    findAppFilesRecursively(rootDoc, appFiles)
                 }
 
-                val totalJars = jarFiles.size
+                val totalApps = appFiles.size
                 runOnUiThread {
-                    tvCurrentFileName.text = "FOUND $totalJars MOD FILES"
-                    logToConsole("<font color='#FFFFFF'>Found $totalJars mod jar file(s) to analyze.</font>", true)
+                    tvCurrentFileName.text = "FOUND $totalApps APP FILES"
+                    logToConsole("<font color='#FFFFFF'>Found $totalApps mod/app file(s) to analyze.</font>", true)
                     progressBar.isIndeterminate = false
-                    progressBar.max = totalJars
+                    progressBar.max = totalApps
                     progressBar.progress = 0
                 }
 
@@ -197,11 +197,11 @@ class MainActivity : AppCompatActivity() {
                 var totalFlagged = 0
                 var highestRisk = "CLEAN"
 
-                for ((index, docFile) in jarFiles.withIndex()) {
-                    val name = docFile.name ?: "UnknownMod.jar"
+                for ((index, docFile) in appFiles.withIndex()) {
+                    val name = docFile.name ?: "UnknownApp.jar"
                     runOnUiThread {
                         tvCurrentFileName.text = "SCANNING: $name"
-                        logToConsole("<font color='#71717A'>[$index/$totalJars]</font> Scanning <font color='#FFFFFF'>$name</font>...", true)
+                        logToConsole("<font color='#71717A'>[$index/$totalApps]</font> Scanning <font color='#FFFFFF'>$name</font>...", true)
                     }
 
                     val scanResult = analyzer.scanJar(docFile.uri, name, docFile.lastModified())
@@ -241,14 +241,14 @@ class MainActivity : AppCompatActivity() {
                 // Finalize scan logs
                 runOnUiThread {
                     val riskColored = if (highestRisk == "DANGEROUS") "<font color='#EF4444'><b>🔴 DANGEROUS</b></font>" else if (highestRisk == "SUSPICIOUS") "<font color='#F59E0B'><b>🟡 SUSPICIOUS</b></font>" else "<font color='#10B981'><b>🟢 CLEAN</b></font>"
-                    logToConsole("<br><b><font color='#FFFFFF'>Scan complete.</font></b> Flagged <font color='#EF4444'><b>$totalFlagged</b></font> threat(s) out of <font color='#FFFFFF'>$totalJars</font> files.", true)
+                    logToConsole("<br><b><font color='#FFFFFF'>Scan complete.</font></b> Flagged <font color='#EF4444'><b>$totalFlagged</b></font> threat(s) out of <font color='#FFFFFF'>$totalApps</font> files.", true)
                     logToConsole("Highest Threat Level: $riskColored", true)
                     logToConsole("<font color='#A1A1AA'>Reporting telemetry to central server...</font>", true)
-                    dbHelper.addScan(totalJars, totalFlagged, highestRisk)
+                    dbHelper.addScan(totalApps, totalFlagged, highestRisk)
                 }
 
                 // Report stats to global Vercel server
-                val reported = reportScanToServer(totalJars, totalFlagged, highestRisk, detections)
+                val reported = reportScanToServer(totalApps, totalFlagged, highestRisk, detections)
                 runOnUiThread {
                     ivScannerLogo.clearAnimation()
                     startIdleGlowAnimation()
@@ -280,12 +280,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun findJarFilesRecursively(directory: DocumentFile, outList: MutableList<DocumentFile>) {
+    private fun findAppFilesRecursively(directory: DocumentFile, outList: MutableList<DocumentFile>) {
         val files = directory.listFiles()
         for (file in files) {
             if (file.isDirectory) {
-                findJarFilesRecursively(file, outList)
-            } else if (file.isFile && file.name?.endsWith(".jar") == true) {
+                findAppFilesRecursively(file, outList)
+            } else if (file.isFile && (file.name?.endsWith(".jar") == true || file.name?.endsWith(".apk") == true)) {
                 outList.add(file)
             }
         }

@@ -103,7 +103,7 @@ class SecurityDaemonService : Service() {
         val rootDoc = DocumentFile.fromTreeUri(this, treeUri)
         if (rootDoc != null) {
             val list = mutableListOf<DocumentFile>()
-            gatherJars(rootDoc, list)
+            gatherApps(rootDoc, list)
             for (doc in list) {
                 val uniqueKey = "${doc.name}_${doc.lastModified()}"
                 processedFiles.add(uniqueKey)
@@ -114,13 +114,13 @@ class SecurityDaemonService : Service() {
     private fun scanFolderForChanges(treeUri: Uri) {
         val rootDoc = DocumentFile.fromTreeUri(this, treeUri)
         if (rootDoc != null) {
-            val currentJars = mutableListOf<DocumentFile>()
-            gatherJars(rootDoc, currentJars)
+            val currentApps = mutableListOf<DocumentFile>()
+            gatherApps(rootDoc, currentApps)
 
             val analyzer = ModAnalyzer(this)
 
-            for (doc in currentJars) {
-                val name = doc.name ?: "UnknownMod.jar"
+            for (doc in currentApps) {
+                val name = doc.name ?: "UnknownApp.jar"
                 val uniqueKey = "${name}_${doc.lastModified()}"
 
                 if (!processedFiles.contains(uniqueKey)) {
@@ -136,12 +136,12 @@ class SecurityDaemonService : Service() {
         }
     }
 
-    private fun gatherJars(directory: DocumentFile, list: MutableList<DocumentFile>) {
+    private fun gatherApps(directory: DocumentFile, list: MutableList<DocumentFile>) {
         val files = directory.listFiles()
         for (file in files) {
             if (file.isDirectory) {
-                gatherJars(file, list)
-            } else if (file.isFile && file.name?.endsWith(".jar") == true) {
+                gatherApps(file, list)
+            } else if (file.isFile && (file.name?.endsWith(".jar") == true || file.name?.endsWith(".apk") == true)) {
                 list.add(file)
             }
         }
