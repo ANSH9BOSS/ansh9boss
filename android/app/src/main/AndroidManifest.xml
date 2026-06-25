@@ -20,6 +20,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".NodeGraphActivity" android:exported="false" android:theme="@style/Theme.AppCompat.NoActionBar" />
         
         <!-- Foreground Security Daemon Service -->
         <service 

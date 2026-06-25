@@ -298,6 +298,15 @@ def report_scan():
     except Exception as e:
         return jsonify({"success": False, "message": f"Telemetry processing error: {str(e)}"}), 500
 
+@app.route("/api/admin_stats")
+def admin_stats():
+    """Endpoint exclusively for the Vercel app to fetch global admin stats."""
+    try:
+        stats = get_stats()
+        return jsonify({"success": True, "stats": stats})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 @app.route("/api/live_feed")
 def live_feed():
     """Fetch global real-time counters and recent threat detections."""

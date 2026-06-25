@@ -138,6 +138,24 @@
 
     <!-- Action Buttons with minimal Black & White styling -->
     <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnShowGraph"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:text="OPEN 3D NODE GRAPH"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.08"
+        app:backgroundTint="#000000"
+        app:strokeColor="#10B981"
+        app:strokeWidth="1.5dp"
+        app:cornerRadius="4dp"
+        app:layout_constraintBottom_toTopOf="@id/btnSelectFolder"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="8dp" />
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSelectFolder"
         android:layout_width="0dp"
         android:layout_height="48dp"

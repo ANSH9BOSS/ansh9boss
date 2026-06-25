@@ -323,44 +323,25 @@ def save_hashes(hashes):
     write_json_file(HASHES_FILE, hashes)
 
 def get_stats():
-    """Aggregate statistics from JSON files."""
-    scans = get_all_scans()
-    detections = get_all_detections()
-    
-    total_scans = len(scans)
-    total_files_scanned = sum(s.get("total_files", 0) for s in scans)
-    total_flagged_files = sum(s.get("flagged_files", 0) for s in scans)
-    
-    # Layers Breakdown
-    detection_layers = {}
-    for d in detections:
-        layer = d.get("detection_layer", "Unknown")
-        detection_layers[layer] = detection_layers.get(layer, 0) + 1
+    """Fetch aggregated statistics from persistent VPS database."""
+    try:
+        import urllib.request
+        import json
+        req = urllib.request.Request("http://13.126.124.247:5000/api/admin_stats")
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            if data.get("success"):
+                return data.get("stats")
+    except Exception as e:
+        pass
         
-    # Common Threats
-    threat_counts = {}
-    for d in detections:
-        key = (d.get("file_name"), d.get("risk_level", "SUSPICIOUS"))
-        if key[0]:
-            threat_counts[key] = threat_counts.get(key, 0) + 1
-        
-    # Sort and format top 5
-    sorted_threats = sorted(threat_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-    common_threats = [
-        {"file_name": k[0], "risk_level": k[1], "count": v}
-        for k, v in sorted_threats
-    ]
-    
-    # Recent Scans
-    recent_scans = list(reversed(scans))[:15]
-    
     return {
-        "total_scans": total_scans,
-        "total_files_scanned": total_files_scanned,
-        "total_flagged_files": total_flagged_files,
-        "detection_layers": detection_layers,
-        "common_threats": common_threats,
-        "recent_scans": recent_scans
+        "total_scans": 0,
+        "total_files_scanned": 0,
+        "total_flagged_files": 0,
+        "detection_layers": {},
+        "common_threats": [],
+        "recent_scans": []
     }
 
 @app.route("/download/ansh9boss.apk")
@@ -533,116 +514,33 @@ def report_scan():
         if not data:
             return jsonify({"success": False, "message": "No payload received"}), 400
             
-        platform = data.get("platform", "Unknown")
-        total_files = data.get("total_files", 0)
-        flagged_files = data.get("flagged_files", 0)
-        highest_risk = data.get("highest_risk", "CLEAN")
-        detections = data.get("detections", [])
-        device_name = data.get("device_name", "Unknown Device")
-        
         ip_address, location = get_ip_and_location(request.headers, request.remote_addr)
+        data["ip_address"] = ip_address
+        data["location"] = location
         
-        scans = get_all_scans()
-        new_scan_id = len(scans) + 1
-        
-        timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        scan_record = {
-            "id": new_scan_id,
-            "timestamp": timestamp_str,
-            "total_files": total_files,
-            "flagged_files": flagged_files,
-            "highest_risk": highest_risk,
-            "platform": platform,
-            "device_name": device_name,
-            "ip_address": ip_address,
-            "location": location
-        }
-        scans.append(scan_record)
-        save_scans(scans)
-        
-        all_detections = get_all_detections()
-        for det in detections:
-            new_det_id = len(all_detections) + 1
-            det_record = {
-                "id": new_det_id,
-                "scan_id": new_scan_id,
-                "file_name": det.get("file_name"),
-                "file_path": "Telemetry Upload (Anonymized)",
-                "risk_level": det.get("risk_level"),
-                "detection_layer": det.get("detection_layer"),
-                "matched_details": ", ".join(det.get("matched_details")) if isinstance(det.get("matched_details"), list) else det.get("matched_details")
-            }
-            all_detections.append(det_record)
-        save_detections(all_detections)
-        
-        # Fire Discord Webhook if a dangerous threat is reported
-        config = load_config()
-        if highest_risk == "DANGEROUS" and config.get("discord_webhook"):
-            webhook_url = config["discord_webhook"]
-            try:
-                import urllib.request
-                import json
-                
-                det_list = "\n".join([f"• `{d.get('file_name', 'Unknown')}` ({d.get('detection_layer', 'Unknown')})" for d in detections])
-                
-                payload = {
-                    "embeds": [{
-                        "title": "🚨 DANGEROUS THREAT DETECTED",
-                        "color": 15548997,
-                        "description": f"**Platform:** {platform}\n**Device:** {device_name}\n**IP Address:** {ip_address}\n**Location:** {location}\n\n**Detected Files:**\n{det_list}",
-                        "footer": { "text": "CheatsAnalyser Global Telemetry Node" }
-                    }]
-                }
-                req = urllib.request.Request(webhook_url, data=json.dumps(payload).encode('utf-8'), headers={"Content-Type": "application/json"})
-                urllib.request.urlopen(req, timeout=5)
-            except Exception as e:
-                pass
-            
-        return jsonify({"success": True, "message": "Global telemetry logged successfully!"})
+        # Proxy to persistent VPS database
+        import urllib.request
+        import json
+        req = urllib.request.Request(
+            "http://13.126.124.247:5000/api/report_scan",
+            data=json.dumps(data).encode('utf-8'),
+            headers={"Content-Type": "application/json"}
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return jsonify(json.loads(resp.read().decode("utf-8")))
     except Exception as e:
-        return jsonify({"success": False, "message": f"Telemetry processing error: {str(e)}"}), 500
+        return jsonify({"success": False, "message": f"Telemetry proxy error: {str(e)}"}), 500
 
 @app.route("/api/live_feed")
 def live_feed():
     try:
-        scans = get_all_scans()
-        all_detections = get_all_detections()
-        
-        total_scans = len(scans)
-        total_files = sum(s.get("total_files", 0) for s in scans)
-        total_flagged = sum(s.get("flagged_files", 0) for s in scans)
-        
-        global_stats = {
-            "total_scans": total_scans,
-            "total_files": total_files,
-            "total_flagged": total_flagged
-        }
-        
-        scan_map = {s["id"]: s for s in scans}
-        
-        recent_detections = []
-        for d in reversed(all_detections):
-            if len(recent_detections) >= 8:
-                break
-            scan_id = d.get("scan_id")
-            scan = scan_map.get(scan_id, {})
-            
-            recent_detections.append({
-                "file_name": d.get("file_name"),
-                "risk_level": d.get("risk_level"),
-                "detection_layer": d.get("detection_layer"),
-                "platform": scan.get("platform", "Unknown"),
-                "timestamp": scan.get("timestamp", "")
-            })
-            
-        return jsonify({
-            "success": True,
-            "stats": global_stats,
-            "recent": recent_detections
-        })
+        import urllib.request
+        import json
+        req = urllib.request.Request("http://13.126.124.247:5000/api/live_feed")
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            return jsonify(json.loads(resp.read().decode("utf-8")))
     except Exception as e:
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({"success": False, "message": f"Proxy error: {str(e)}"}), 500
 
 @app.route("/api/update_config", methods=["POST"])
 def update_config():

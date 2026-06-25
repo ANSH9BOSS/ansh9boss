@@ -128,6 +128,12 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(intent, REQUEST_CODE_SAF)
         }
 
+        val btnShowGraph = findViewById<Button>(R.id.btnShowGraph)
+        btnShowGraph.setOnClickListener {
+            val intent = Intent(this, NodeGraphActivity::class.java)
+            startActivity(intent)
+        }
+
         btnStartScan.setOnClickListener {
             val uri = selectedFolderUri
             if (uri != null) {
