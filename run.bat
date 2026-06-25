@@ -1,7 +1,7 @@
 @echo off
 title ANSH9BOSS - Auto Installer & Runner
 echo =============================================
-echo    ANSH9BOSS - AUTO INSTALLER & RUNNER       
+echo    ANSH9BOSS - AUTO INSTALLER AND RUNNER       
 echo =============================================
 
 :: Check if Python is installed
