@@ -168,16 +168,6 @@
                         <textarea id="cheat-strings">{{ config.cheat_strings | join(', ') }}</textarea>
                     </div>
 
-                    <!-- Android Auto-Quarantine -->
-                    <div class="config-group">
-                        <h4 style="color: var(--danger);"><i class="fa-solid fa-shield-virus"></i> Auto-Quarantine Modules</h4>
-                        <p>If active, the Android Daemon will immediately rename detected malicious JAR files to .quarantine to block them from loading.</p>
-                        <select id="auto-quarantine" class="form-control" style="max-width: 200px; background: #000; color: #fff;">
-                            <option value="true" {% if config.auto_quarantine %}selected{% endif %}>Enabled (Aggressive)</option>
-                            <option value="false" {% if not config.auto_quarantine %}selected{% endif %}>Disabled (Alert Only)</option>
-                        </select>
-                    </div>
-
                     <!-- Discord Webhook -->
                     <div class="config-group">
                         <h4 style="color: #5865F2;"><i class="fa-brands fa-discord"></i> Global Webhook Alerts</h4>
@@ -350,7 +340,6 @@
             const knownCheats = document.getElementById("known-cheats").value.split(",").map(s => s.trim());
             const knownPackages = document.getElementById("known-packages").value.split(",").map(s => s.trim());
             const cheatStrings = document.getElementById("cheat-strings").value.split(",").map(s => s.trim());
-            const autoQuarantine = document.getElementById("auto-quarantine").value === "true";
             const discordWebhook = document.getElementById("discord-webhook").value.trim();
 
             const feedback = document.getElementById("feedback");
@@ -367,7 +356,6 @@
                     known_cheats: knownCheats,
                     known_packages: knownPackages,
                     cheat_strings: cheatStrings,
-                    auto_quarantine: autoQuarantine,
                     discord_webhook: discordWebhook
                 })
             })

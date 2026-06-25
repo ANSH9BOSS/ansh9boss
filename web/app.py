@@ -368,9 +368,6 @@ def update_config():
         if "cheat_strings" in data:
             config["cheat_strings"] = [x.strip().lower() for x in data["cheat_strings"] if x.strip()]
             
-        if "auto_quarantine" in data:
-            config["auto_quarantine"] = bool(data["auto_quarantine"])
-            
         if "discord_webhook" in data:
             config["discord_webhook"] = data["discord_webhook"].strip()
             

@@ -130,14 +130,6 @@ class SecurityDaemonService : Service() {
 
                     if (result.riskLevel != "CLEAN") {
                         sendThreatNotification(name, result.riskLevel, result.layersTriggered.joinToString(" & "))
-                        
-                        if (Config.autoQuarantine && doc.isFile && result.riskLevel == "DANGEROUS") {
-                            try {
-                                doc.renameTo("${name}.quarantine")
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        }
                     }
                 }
             }

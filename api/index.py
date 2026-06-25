@@ -668,9 +668,6 @@ def update_config():
         if "cheat_strings" in data:
             config["cheat_strings"] = [x.strip().lower() for x in data["cheat_strings"] if x.strip()]
             
-        if "auto_quarantine" in data:
-            config["auto_quarantine"] = bool(data["auto_quarantine"])
-            
         if "discord_webhook" in data:
             config["discord_webhook"] = data["discord_webhook"].strip()
             
@@ -686,8 +683,7 @@ def get_rules():
         "version": config.get("version", "1.0.0"),
         "known_cheats": config.get("known_cheats", []),
         "known_packages": config.get("known_packages", []),
-        "cheat_strings": config.get("cheat_strings", []),
-        "auto_quarantine": config.get("auto_quarantine", False)
+        "cheat_strings": config.get("cheat_strings", [])
     })
 
 @app.route("/api/verify_hash")

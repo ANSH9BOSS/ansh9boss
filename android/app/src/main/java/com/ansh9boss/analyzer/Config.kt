@@ -22,6 +22,4 @@ object Config {
         "autototem", "fastplace", "criticals", "antiknockback", "nuker",
         "jesus", "automine", "cheatengine"
     )
-    
-    var autoQuarantine: Boolean = false
 }
